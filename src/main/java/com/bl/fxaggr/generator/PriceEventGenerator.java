@@ -53,9 +53,14 @@ public class PriceEventGenerator implements Runnable {
                 priceEvent.getPriceEntity().setDatetime(dateTime);
                 priceEvent.getPriceEntity().setBid(Double.valueOf(tokens[1]));
                 priceEvent.getPriceEntity().setAsk(Double.valueOf(tokens[2]));
+                priceEvent.getPriceEntity().setSpread(priceEvent.getPriceEntity().getAsk() - priceEvent.getPriceEntity().getBid());
                 priceEvent.getPriceEntity().setSymbol("AUDCAD");
                 ringBuffer.publish(sequence);
-                if (cnt++ > 100) {
+                // System.out.println("Data producer - published sequence: " + sequence + " bid: " 
+                //     + priceEvent.getPriceEntity().getBid() + " ask: " + priceEvent.getPriceEntity().getAsk()
+                //     + " spread: " + (priceEvent.getPriceEntity().getAsk() - priceEvent.getPriceEntity().getBid()));  
+                
+                if (cnt++ > 5) {
                     System.out.println("Data producer Stopping after : " + cnt);  
                     break;
                 }

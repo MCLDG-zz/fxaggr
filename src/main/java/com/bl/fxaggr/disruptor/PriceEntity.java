@@ -11,6 +11,7 @@ public class PriceEntity {
     private double close;
     private double bid;
     private double ask;
+    private double spread;
     private LocalDateTime datetime;
 	private boolean processed;
 
@@ -47,9 +48,15 @@ public class PriceEntity {
     public void setAsk(double ask) {
         this.ask = ask;
     }
+    public void setSpread(double spread) {
+        this.spread = spread;
+    }
     public void setDatetime(LocalDateTime datetime) {
         this.datetime = datetime;
     }
+	public void setProcessed(boolean processed) {
+		this.processed = processed;
+	}
     public long getSequence() {
         return this.sequence;
     }
@@ -68,13 +75,13 @@ public class PriceEntity {
     public double getAsk() {
         return this.ask;
     }
+    public double getSpread() {
+        return this.spread;
+    }
     public LocalDateTime getDatetime() {
         return this.datetime;
     }
     public boolean getProcessed() {
 		return processed;
-	}
-	void setProcessed(boolean processed) {
-		this.processed = processed;
 	}
 }

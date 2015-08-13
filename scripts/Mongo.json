@@ -1,24 +1,52 @@
 db.pricestats.drop()
 db.PriceColl.aggregate(
-   [
-      {
-        $group : {
-           _id : { symbol: "$symbol", hour: "$datetime.time.hour" },
-           totalAsk: { $sum: { $multiply: [ "$bid", "$ask" ] } },
-           averageAsk: { $avg: "$ask" },
-           averageBid: { $avg: "$bid" },
-           averageSpread: { $avg: { $subtract: [ "$ask", "$bid" ] } },
-           maxSpread: { $max: { $subtract: [ "$ask", "$bid" ] } },
-           minSpread: { $min: { $subtract: [ "$ask", "$bid" ] } },
-           count: { $sum: 1 }
+    [{
+        $group: {
+            _id: {
+                symbol: "$symbol",
+                hour: "$datetime.time.hour"
+            },
+            totalAsk: {
+                $sum: {
+                    $multiply: ["$bid", "$ask"]
+                }
+            },
+            averageAsk: {
+                $avg: "$ask"
+            },
+            averageBid: {
+                $avg: "$bid"
+            },
+            averageSpread: {
+                $avg: {
+                    $subtract: ["$ask", "$bid"]
+                }
+            },
+            maxSpread: {
+                $max: {
+                    $subtract: ["$ask", "$bid"]
+                }
+            },
+            minSpread: {
+                $min: {
+                    $subtract: ["$ask", "$bid"]
+                }
+            },
+            count: {
+                $sum: 1
+            }
         }
-      },
-           {$out: "pricestats"}
-   ]
+    }, {
+        $out: "pricestats"
+    }]
 )
 
 db.aggrconfig.drop()
-db.aggrconfig.insert(
-{ "symbol" : "AUDCAD", "pctLeewayAllowedSpread" : 10.0, "pctLeewayToPreviousBid" : 10.0, "pctLeewayToPreviousAsk" : 1.0      }
-)
+db.aggrconfig.insert({
+    "symbol": "AUDCAD",
+    "pctLeewayAllowedSpread": 10.0,
+    "pctLeewayToPreviousBid": 10.0,
+    "pctLeewayToPreviousAsk": 1.0
+})
 
+db.priceoutliers.drop()
