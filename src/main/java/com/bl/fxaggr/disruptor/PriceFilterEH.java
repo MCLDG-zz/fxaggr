@@ -96,7 +96,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		
 		//Check if the spread falls within the acceptable range
 		if (priceStats == null || aggrConfig == null) {
-			System.out.println("PriceFilterEH cannot analyse pricing. No price stats in table pricestats, or no config in table aggrconfig. Sequence: " + sequence); 
+			System.out.println("PriceFilterEH cannot analyse pricing. No price stats in table pricestats, or no config in table aggrconfig. Currency: " + currency + ". Sequence: " + sequence); 
 		}
 		else {
 			if (spread > Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfig.pctLeewayAllowedSpread / 100))) {
@@ -166,7 +166,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 			}
 		}
 		else {
-			System.out.println("PriceFilterEH cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
+			System.out.println("PriceFilterEH cannot analyse pricing. No config in table aggrconfig. Currency: " + currency + ". Sequence: " + sequence); 
 		}
 		
 		//Log the stats

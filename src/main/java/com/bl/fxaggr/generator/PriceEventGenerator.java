@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.io.IOException;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
 import java.io.BufferedReader;
@@ -57,16 +58,16 @@ public class PriceEventGenerator implements Runnable {
                     priceEvent.getPriceEntity().setBid(Double.valueOf(tokens[1]));
                     priceEvent.getPriceEntity().setAsk(Double.valueOf(tokens[2]));
                     priceEvent.getPriceEntity().setSpread(priceEvent.getPriceEntity().getAsk() - priceEvent.getPriceEntity().getBid());
-                    priceEvent.getPriceEntity().setSymbol("AUDCAD");
+                    priceEvent.getPriceEntity().setSymbol(csvFile.getName().substring(0,csvFile.getName().indexOf(".")));
                     ringBuffer.publish(sequence);
                     // System.out.println("Data producer - published sequence: " + sequence + " bid: " 
                     //     + priceEvent.getPriceEntity().getBid() + " ask: " + priceEvent.getPriceEntity().getAsk()
                     //     + " spread: " + (priceEvent.getPriceEntity().getAsk() - priceEvent.getPriceEntity().getBid()));  
                     
-                    if (cnt++ > 1000) {
-                        System.out.println("Data producer Stopping after : " + cnt);  
-                        break;
-                    }
+                    // if (cnt++ > 1000) {
+                    //     System.out.println("Data producer Stopping after : " + cnt);  
+                    //     break;
+                    // }
                 }
                 reader.close();
                 Date dateEnd = new Date();

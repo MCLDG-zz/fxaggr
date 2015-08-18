@@ -64,11 +64,9 @@ public class StatsManager {
 		}
 		
 		db = mongoClient.getDatabase("fxaggr");
-		System.out.println("StatsManager connection to Mongo created: " + db.hashCode());
-		
+
 		//Initialise the BSON IDs used to update the stats records in Mongo
 		overallStatsID = new BsonString("1");
-        symbolStatsID = new BsonString("2");
     }
 
     public static void eventReceived(PriceEvent event) {
@@ -81,37 +79,46 @@ public class StatsManager {
 
         overallStats.totalNumberOfEvents++;
         symbolStat.totalNumberOfEvents++;
+        
+        //Update the filtered event counters
         if (event.getFilteredEvent()) {
             overallStats.totalNumberOfFilteredEvents++;
             symbolStat.totalNumberOfFilteredEvents++;
-        }
-        List <PriceEvent.FilterReason> filteredReasons = event.getFilteredReasons();
-		System.out.println("Stats filteredReasons: " + filteredReasons.toString());
-        for (PriceEvent.FilterReason filteredReason: filteredReasons) {
-            if (overallStats.numberPerFilteredReason.containsKey(filteredReason)) {
-                overallStats.numberPerFilteredReason.replace(filteredReason, overallStats.numberPerFilteredReason.get(filteredReason) + 1);
-            } 
-            else {
-                overallStats.numberPerFilteredReason.put(filteredReason, new Long(1));
-            }
-            if (symbolStat.numberPerFilteredReason.containsKey(filteredReason)) {
-                symbolStat.numberPerFilteredReason.replace(filteredReason, symbolStat.numberPerFilteredReason.get(filteredReason) + 1);
-            }
-            else {
-                symbolStat.numberPerFilteredReason.put(filteredReason, new Long(1));
+            List <PriceEvent.FilterReason> filteredReasons = event.getFilteredReasons();
+            for (PriceEvent.FilterReason filteredReason: filteredReasons) {
+                if (overallStats.numberPerFilteredReason.containsKey(filteredReason)) {
+                    overallStats.numberPerFilteredReason.replace(filteredReason, overallStats.numberPerFilteredReason.get(filteredReason) + 1);
+                } 
+                else {
+                    overallStats.numberPerFilteredReason.put(filteredReason, new Long(1));
+                }
+                if (overallStats.totalNumberOfFilteredEvents != overallStats.numberPerFilteredReason.get(filteredReason)) {
+                    System.out.println("Filtered events not matching. Total: " + overallStats.totalNumberOfFilteredEvents + " Reason: " + overallStats.numberPerFilteredReason.get(filteredReason));
+                }
+                if (symbolStat.numberPerFilteredReason.containsKey(filteredReason)) {
+                    symbolStat.numberPerFilteredReason.replace(filteredReason, symbolStat.numberPerFilteredReason.get(filteredReason) + 1);
+                }
+                else {
+                    symbolStat.numberPerFilteredReason.put(filteredReason, new Long(1));
+                }
             }
         }
     }
     private static void persistStats() {
     
-    	//Convert the stats to JSON
+    	//Convert the stats to JSON and write to DB
 		Gson gson = new Gson();
     	String jsonOverallStats = gson.toJson(overallStats);
-    	String jsonSymbolStats = gson.toJson(symbolStats);
-
-    	//Write to Mongo
 		journalToMongo("overall", overallStatsID, jsonOverallStats);
-		journalToMongo("symbol", symbolStatsID, jsonSymbolStats);
+    	
+        for (Map.Entry<String, EventStats> entry : symbolStats.entrySet()) {
+            String jsonSymbolStats = gson.toJson(entry.getValue());
+            symbolStatsID = new BsonString(entry.getKey());
+            
+        	//Write to Mongo
+    		journalToMongo("symbol", symbolStatsID, jsonSymbolStats);
+        }
+
     }
 
 	/**
@@ -120,8 +127,5 @@ public class StatsManager {
 	private static void journalToMongo(String whichStat, BsonValue ID, String content) {
 		UpdateResult updateResult = db.getCollection("runtimestats").replaceOne(new Document("_id", ID),
 		    Document.parse(content), new UpdateOptions().upsert(true));
-		    
-		System.out.println("Stats IDs are: " + overallStatsID.toString() + symbolStatsID.toString());
-		System.out.println("Stats updating DB. Return value is: " + updateResult.toString());
 	}
 }
