@@ -1,5 +1,8 @@
 package com.bl.fxaggr.disruptor;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * You would think that by now the useless Java group would have fixed
  * the need to use getters and setters and provided a simple, declarative
@@ -12,11 +15,33 @@ package com.bl.fxaggr.disruptor;
  */
 public class PriceEvent {
     private PriceEntity priceEntity;
+    private boolean filteredEvent;
+    private List<FilterReason> filterReasons = new ArrayList<>();
+    
+    public enum FilterReason {
+		SPREAD_EXCEEDS_AVERAGE,
+		ASK_SPIKE,
+		BID_SPIKE
+	}
     
     public void setPriceEntity(PriceEntity priceEntity) {
         this.priceEntity = priceEntity;
     }
     public PriceEntity getPriceEntity() {
         return priceEntity;
+    }
+
+    public void setFilteredEvent(boolean filteredEvent) {
+        this.filteredEvent = filteredEvent;
+    }
+    public boolean getFilteredEvent() {
+        return filteredEvent;
+    }
+    
+    public boolean setFilteredReason(FilterReason filteredReason) {
+        return this.filterReasons.add(filteredReason);
+    }
+    public List<FilterReason> getFilteredReasons() {
+        return filterReasons;
     }
 }

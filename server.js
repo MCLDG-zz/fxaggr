@@ -55,19 +55,21 @@ module.exports = app;
 var tickers = [];
 var sockets = [];
 var FETCH_INTERVAL = 3000;
+var OUTLIER_LIMIT = 100;
 
 io.on('connection', function(socket) {
 
 	sockets.push(socket);
 
-	socket.on('ticker', function(msg) {
-	});
+	socket.on('ticker', function(msg) {});
 
 	sendOutliersToClients(socket);
+	sendRuntimeStatsToClients(socket);
 
 	//Every N seconds
 	var timer = setInterval(function() {
 		sendOutliersToClients(socket);
+		sendRuntimeStatsToClients(socket);
 	}, FETCH_INTERVAL);
 
 	socket.on('error', function(msg) {
@@ -76,14 +78,31 @@ io.on('connection', function(socket) {
 });
 
 function sendOutliersToClients(socket) {
-    var collection = db.get('priceoutliers');
-    collection.find({}, {}, function(e, docs) {
-				//ensure the response contains a valid document
-				if (!docs) {
-					return;
-				}
-				socket.emit('outlier', docs);
-			});
+	var collection = db.get('priceoutliers');
+	collection.find({}, {
+			limit: 100
+		},
+		function(e, docs) {
+			//ensure the response contains a valid document
+			if (!docs) {
+				return;
+			}
+			socket.emit('outlier', docs);
+		});
+}
+
+function sendRuntimeStatsToClients(socket) {
+	var collection = db.get('runtimestats');
+	collection.find({}, {
+			limit: 100
+		},
+		function(e, docs) {
+			//ensure the response contains a valid document
+			if (!docs) {
+				return;
+			}
+			socket.emit('runtimestats', docs);
+		});
 }
 
 server.listen(process.env.PORT || 3000, process.env.IP || "0.0.0.0", function() {

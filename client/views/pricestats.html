@@ -1,0 +1,31 @@
+<div ng-init="loadPriceStats()">
+</div>
+
+<table class="table table-condensed table-responsive table-hover">
+    <thead>
+        <tr>
+            <th colspan="1">Symbol</th>
+            <th colspan="1">Hour</th>
+            <th colspan="1">Average Ask</th>
+            <th colspan="1">Average Bid</th>
+            <th colspan="1">Average Spread</th>
+            <th colspan="1">Max Spread</th>
+            <th colspan="1">Min Spread</th>
+            <th colspan="1">Total Stats Records</th>
+        </tr>
+    </thead>
+    <!-- This can be added to the tbody repeat below to create a highlight-on-click: ng-class="{'highlightSelectedRow':$index == selectedOrderRow}" -->
+    <tbody data-ng-repeat="item in pricestats | orderBy:['_id.symbol','_id.hour']" class="list">
+        <tr>
+            <td class="span2">{{item._id.symbol}}</td>
+            <td class="span2">{{item._id.hour}}</td>
+            <td class="span2">{{item.averageAsk | number:6}}</td>
+            <td class="span2">{{item.averageBid | number:6}}</td>
+            <td class="span2">{{item.averageSpread | number:6}}</td>
+            <td class="span2">{{item.maxSpread | number:6}}</td>
+            <td class="span2">{{item.minSpread | number:6}}</td>
+            <td class="span2">{{item.count | number}}</td>
+        </tr>
+    </tbody>
+</table>
+    

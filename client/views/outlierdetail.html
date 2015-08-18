@@ -1,0 +1,140 @@
+
+<!-- 
+$scope.outliers is refreshed every few seconds. This seems to reset the variables used in the
+ng-if below - so an expanded section will close. 
+
+Thinking more carefully, if I will refresh the outliers every few seconds, does it make sense to expand
+sections on this page, since it's contents are changing regularly?
+-->
+
+<div class="list">
+    <table class="table table-striped table-bordered table table-condensed table-responsive">
+        <thead>
+            <tr>
+                <th colspan="2">Message: {{selectedOutlier.priceoutlier.message}}
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-click="showCurrentPrice = !showCurrentPrice">
+                <td colspan="2" class="text-center text-primary">
+                    Current Price
+                    <span class="fa fa-chevron-down" aria-hidden="true" ng-if="showCurrentPrice"></span>
+                    <span class="fa fa-chevron-right" aria-hidden="true" ng-if="!showCurrentPrice"></span>
+                </td>
+            </tr>
+
+            <tr ng-if="showCurrentPrice">
+                <td>Symbol</td>
+                <td>{{selectedOutlier.priceoutlier.currentpriceentity.symbol}}</td>
+            </tr>
+            <tr ng-if="showCurrentPrice">
+                <td>Bid</td>
+                <td>{{selectedOutlier.priceoutlier.currentpriceentity.bid | number: 6}}</td>
+            </tr>
+            <tr ng-if="showCurrentPrice">
+                <td>Ask</td>
+                <td>{{selectedOutlier.priceoutlier.currentpriceentity.ask | number: 6}}</td>
+            </tr>
+            <tr ng-if="showCurrentPrice">
+                <td>Datetime</td>
+                <td>{{tem.priceoutlier.currentpriceentity.datetime}}</td>
+            </tr>
+            <tr ng-if="showCurrentPrice">
+                <td>Spread</td>
+                <td>{{selectedOutlier.priceoutlier.currentpriceentity.ask - selectedOutlier.priceoutlier.currentpriceentity.bid | number: 6}}</td>
+            </tr>
+
+
+            <tr ng-click="showPreviousPrice = !showPreviousPrice">
+                <td colspan="2" class="text-center text-primary">
+                    Previous Price
+                    <span class="fa fa-chevron-down" aria-hidden="true" ng-if="showPreviousPrice"></span>
+                    <span class="fa fa-chevron-right" aria-hidden="true" ng-if="!showPreviousPrice"></span>
+                </td>
+            </tr>
+            <tr ng-if="showPreviousPrice">
+                <td>Symbol</td>
+                <td>{{selectedOutlier.priceoutlier.previousprice.symbol}}</td>
+            </tr>
+            <tr ng-if="showPreviousPrice">
+                <td>Bid</td>
+                <td>{{selectedOutlier.priceoutlier.previousprice.bid | number: 6}}</td>
+            </tr>
+            <tr ng-if="showPreviousPrice">
+                <td>Ask</td>
+                <td>{{selectedOutlier.priceoutlier.previousprice.ask | number: 6}}</td>
+            </tr>
+            <tr ng-if="showPreviousPrice">
+                <td>Datetime</td>
+                <td>{{tem.priceoutlier.previousprice.datetime}}</td>
+            </tr>
+            <tr ng-if="showPreviousPrice">
+                <td>Spread</td>
+                <td>{{selectedOutlier.priceoutlier.previousprice.spread | number: 6}}</td>
+            </tr>
+
+            <tr ng-click="showConfig = !showConfig">
+                <td colspan="2" class="text-center text-primary">
+                    Configuration
+                    <span class="fa fa-chevron-down" aria-hidden="true" ng-if="showConfig"></span>
+                    <span class="fa fa-chevron-right" aria-hidden="true" ng-if="!showConfig"></span>
+                </td>
+            </tr>
+            <tr ng-if="showConfig">
+                <td>Symbol</td>
+                <td>{{selectedOutlier.priceoutlier.config.symbol}}</td>
+            </tr>
+            <tr ng-if="showConfig">
+                <td>Pct Leeway to Spread</td>
+                <td>{{selectedOutlier.priceoutlier.config.pctLeewayAllowedSpread | number: 6}}</td>
+            </tr>
+            <tr ng-if="showConfig">
+                <td>Pct Leeway to Previous Ask</td>
+                <td>{{selectedOutlier.priceoutlier.config.pctLeewayToPreviousAsk | number: 6}}</td>
+            </tr>
+            <tr ng-if="showConfig">
+                <td>Pct Leeway to Previous Bid</td>
+                <td>{{selectedOutlier.priceoutlier.config.pctLeewayToPreviousBid | number: 6}}</td>
+            </tr>
+
+            <tr ng-click="showPriceStats = !showPriceStats">
+                <td colspan="2" class="text-center text-primary">
+                    Price Stats
+                    <span class="fa fa-chevron-down" aria-hidden="true" ng-if="showPriceStats"></span>
+                    <span class="fa fa-chevron-right" aria-hidden="true" ng-if="!showPriceStats"></span>
+                </td>
+            </tr>
+            <tr ng-if="showPriceStats">
+                <td>Symbol</td>
+                <td>{{selectedOutlier.priceoutlier.pricestats.symbol}}</td>
+            </tr>
+            <tr ng-if="showPriceStats">
+                <td>Hour of Day</td>
+                <td>{{selectedOutlier.priceoutlier.pricestats.hour}}</td>
+            </tr>
+            <tr ng-if="showPriceStats">
+                <td>Average Bid</td>
+                <td>{{selectedOutlier.priceoutlier.pricestats.averageBid | number: 6}}</td>
+            </tr>
+            <tr ng-if="showPriceStats">
+                <td>Average Ask</td>
+                <td>{{selectedOutlier.priceoutlier.pricestats.averageAsk | number: 6}}</td>
+            </tr>
+            <tr ng-if="showPriceStats">
+                <td>Average Spread</td>
+                <td>{{selectedOutlier.priceoutlier.pricestats.averageSpread | number: 6}}</td>
+            </tr>
+            <tr ng-if="showPriceStats">
+                <td>Maximum Spread</td>
+                <td>{{selectedOutlier.priceoutlier.pricestats.maxSpread | number: 6}}</td>
+            </tr>
+            <tr ng-if="showPriceStats">
+                <td>Minimum Spread</td>
+                <td>{{selectedOutlier.priceoutlier.pricestats.minSpread | number: 6}}</td>
+            </tr>
+            </tr>
+
+        </tbody>
+    </table>
+</div>

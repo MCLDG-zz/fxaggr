@@ -2,33 +2,35 @@
 <html lang="en" ng-app="fxaggr">
 
 <head>
-  <title>Pricing</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
-  <link rel="stylesheet" href="libs/ui-grid.min.css">
+    <title>FX Aggregation Engine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/libs/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="libs/ui-grid.min.css">
+    <link href="/libs/angular-xeditable/css/xeditable.css" rel="stylesheet">
 </head>
 
 <body ng-controller="fxaggrCtrl">
-  <div id="container-fluid">
-    <!-- Navigation -->
-<!--    <div class="row">
-      <div class="col-xs-12 col-sm-12 col-md-12">
-        <ng-include src="'views/partials/navbar.html'"></ng-include>
-      </div>
+    <div id="container-fluid">
+        <!-- Navigation -->
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-12">
+                <ng-include src="'views/navbar.html'"></ng-include>
+            </div>
+        </div>
+
+        <div ui-view></div>
     </div>
--->    
-    There are {{outliers[0].length}} price quotes that have been skipped
-    {{outliers}}
-    <!--<div ui-view></div>-->
-  </div>
-  <!--<ng-include src="'views/partials/footer.html'"></ng-include>-->
+    <!--<ng-include src="'views/partials/footer.html'"></ng-include>-->
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/libs/angular.js"></script>
-  <script src="/libs/angular-ui-router.min.js"></script>
-  <script src="/libs/ui-grid.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/libs/angular.js"></script>
+    <script src="/libs/angular-ui-router.min.js"></script>
+    <script src="/libs/ui-grid.min.js"></script>
+    <script src="/libs/angular-xeditable/js/xeditable.js"></script>
 
-  <script src="/scripts/controllers/aggrcontroller.js"></script>
+    <script src="/scripts/controllers/aggrcontroller.js"></script>
+    <script src="/scripts/config/routerconfig.js"></script>
 </body>
 
 </html>

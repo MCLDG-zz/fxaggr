@@ -46,7 +46,17 @@ db.aggrconfig.insert({
     "symbol": "AUDCAD",
     "pctLeewayAllowedSpread": 10.0,
     "pctLeewayToPreviousBid": 10.0,
-    "pctLeewayToPreviousAsk": 1.0
+    "pctLeewayToPreviousAsk": 5.5,
+    "pctAboveMaxSpread": 5.0,
+    "pctBelowMinSpread": 2.0
+})
+db.aggrconfig.insert({
+    "symbol": "USDEUR",
+    "pctLeewayAllowedSpread": 10.0,
+    "pctLeewayToPreviousBid": 10.0,
+    "pctLeewayToPreviousAsk": 5.5,
+    "pctAboveMaxSpread": 5.0,
+    "pctBelowMinSpread": 2.0
 })
 
 db.priceoutliers.drop()

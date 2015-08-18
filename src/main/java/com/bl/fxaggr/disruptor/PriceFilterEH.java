@@ -18,6 +18,9 @@ import com.mongodb.client.FindIterable;
 
 import com.google.gson.Gson;
 
+import com.bl.fxaggr.stats.StatsManager;
+import com.bl.fxaggr.stats.EventStats;
+
 public class PriceFilterEH implements EventHandler<PriceEvent> {
 	
 	private Map<String, AggrConfig> aggrConfigMap = new HashMap<>();
@@ -28,7 +31,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	private PreviousPrice previousPrice = null;
 	private PriceEntity priceEntity;
 	private MongoDatabase db = null;
-
+	
+	
 	PriceFilterEH() {
 		System.out.println("PriceFilterEH created. Object ID:: " + this.toString()); 
 		MongoClient mongoClient = null;
@@ -80,7 +84,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		
 		String currency = priceEntity.getSymbol();
 		int hour = priceEntity.getDatetime().getHour();
-		double spread = priceEntity.getSpread;
+		double spread = priceEntity.getSpread();
 
 		priceStats = priceStatsMap.get(currency + hour);
 		aggrConfig = aggrConfigMap.get(currency);
@@ -90,16 +94,15 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		// 	+ " spread of: " + spread + ". Found matching aggrConfig: " +  (aggrConfig != null)
 		// 	+ ". Found matching pricestats: " +  (priceStats != null)); 
 		
-		//Check if the bid/ask prices fall within the acceptable range
+		//Check if the spread falls within the acceptable range
 		if (priceStats == null || aggrConfig == null) {
 			System.out.println("PriceFilterEH cannot analyse pricing. No price stats in table pricestats, or no config in table aggrconfig. Sequence: " + sequence); 
 		}
 		else {
 			if (spread > Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfig.pctLeewayAllowedSpread / 100))) {
-				this.persistOutliers("PriceFilterEH skipping quote for sequence: " + sequence + " currency: " + currency 
-					+ ". Spread of: " + spread + " is outside bounds of average spread for this hour: ("
-					+  priceStats.averageSpread + ") + leeway (" + aggrConfig.pctLeewayAllowedSpread + "%), which equals: " 
-					+  (priceStats.averageSpread + (priceStats.averageSpread * aggrConfig.pctLeewayAllowedSpread / 100))); 
+				this.persistOutliers("Spread of: " + spread + " exceeds average spread for this time period"); 
+				event.setFilteredEvent(true);
+				event.setFilteredReason(PriceEvent.FilterReason.SPREAD_EXCEEDS_AVERAGE);
 			}
 		}
 		
@@ -110,40 +113,38 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 				/*
 				* Check if ASK has spiked/dropped
 				*/
-				//Calculate the differece between current price and previous price, and check if it exceeds the Leeway
+				//Calculate the difference between current price and previous price, and check if it exceeds the Leeway
 				double priceDiff = Math.abs(priceEntity.getAsk() - previousPrice.ask);
 				double leewayHi = previousPrice.ask + (previousPrice.ask * aggrConfig.pctLeewayToPreviousAsk / 100);
 				double leewayLo = previousPrice.ask - (previousPrice.ask * aggrConfig.pctLeewayToPreviousAsk / 100);
-				System.out.println("PriceFilterEH check for spikes for sequence: " + sequence 
-					+ " Ask of: " + priceEntity.getAsk() + " hi: "
-					+  leewayHi + " lo: " + leewayLo + ", based on a " + aggrConfig.pctLeewayToPreviousAsk 
-					+ "movement in price"); 
+				// System.out.println("PriceFilterEH check for spikes for sequence: " + sequence 
+				// 	+ " Ask of: " + priceEntity.getAsk() + " hi: "
+				// 	+  leewayHi + " lo: " + leewayLo + ", based on a " + aggrConfig.pctLeewayToPreviousAsk 
+				// 	+ "movement in price"); 
 				if (priceEntity.getAsk() > leewayHi || priceEntity.getAsk() < leewayLo) {
 					priceSpike = true;
-					this.persistOutliers("PriceFilterEH skipping quote for sequence: " + sequence + " currency: " + currency 
-						+ ". Ask has spiked/dropped. Ask of: " + priceEntity.getAsk() + " should be within hi: "
-						+  leewayHi + " lo: " + leewayLo + ", based on a " + aggrConfig.pctLeewayToPreviousAsk 
-						+ "% movement in previous price: " + previousPrice.ask); 
+					this.persistOutliers("Ask of: " + priceEntity.getAsk() + " has spiked/dropped compared to previous price"); 
+					event.setFilteredEvent(true);
+					event.setFilteredReason(PriceEvent.FilterReason.ASK_SPIKE);
 				} 
 				/*
 				* Check if BID has spiked/dropped
 				*/
-				//Calculate the differece between current price and previous price, and check if it exceeds the Leeway
+				//Calculate the difference between current price and previous price, and check if it exceeds the Leeway
 				priceDiff = Math.abs(priceEntity.getBid() - previousPrice.bid);
 				leewayHi = previousPrice.bid + (previousPrice.bid * aggrConfig.pctLeewayToPreviousBid / 100);
 				leewayLo = previousPrice.bid - (previousPrice.bid * aggrConfig.pctLeewayToPreviousBid / 100);
-				System.out.println("PriceFilterEH check for spikes for sequence: " + sequence 
-					+ " Bid of: " + priceEntity.getBid() + " hi: "
-					+  leewayHi + " lo: " + leewayLo + ", based on a " + aggrConfig.pctLeewayToPreviousBid 
-					+ "movement in price"); 
+				// System.out.println("PriceFilterEH check for spikes for sequence: " + sequence 
+				// 	+ " Bid of: " + priceEntity.getBid() + " hi: "
+				// 	+  leewayHi + " lo: " + leewayLo + ", based on a " + aggrConfig.pctLeewayToPreviousBid 
+				// 	+ "movement in price"); 
 				if (priceEntity.getBid() > leewayHi || priceEntity.getBid() < leewayLo) {
 					priceSpike = true;
-					this.persistOutliers("PriceFilterEH skipping quote for sequence: " + sequence + " currency: " + currency 
-						+ ". Bid has spiked/dropped. Bid of: " + priceEntity.getBid() + " should be within hi: "
-						+  leewayHi + " lo: " + leewayLo + ", based on a " + aggrConfig.pctLeewayToPreviousBid 
-						+ "% movement in previous price: " + previousPrice.bid); 
+					this.persistOutliers("Bid of: " + priceEntity.getBid() + " has spiked/dropped compared to previous price"); 
+					event.setFilteredEvent(true);
+					event.setFilteredReason(PriceEvent.FilterReason.ASK_SPIKE);
 				}
-				//Do not store price spikes. They should be treated as anomalies and future
+				//Do not store price spikes. They should be treated as anomalies (faulty) and future
 				//prices should not be compared to them
 				if (!priceSpike) {
 					//Update the previous price
@@ -167,6 +168,9 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		else {
 			System.out.println("PriceFilterEH cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
 		}
+		
+		//Log the stats
+		StatsManager.eventReceived(event);
 		
 		if (sequence == PriceEventMain.producerCount) {
 	        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
@@ -199,14 +203,12 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 			)
 		);
 	}
-
 	private class AggrConfig {
 		public String symbol;
 		public double pctLeewayAllowedSpread;
 		public double pctLeewayToPreviousBid;
 		public double pctLeewayToPreviousAsk;
 	}
-	
 	private class PriceStats {
 		public String symbol;
 		public int hour;
@@ -223,5 +225,4 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		public double bid;
 		public double spread;
 	}
-	
 }

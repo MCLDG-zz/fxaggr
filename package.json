@@ -22,7 +22,8 @@
     "soap": "",
     "angular": "1.4.3",
     "angular-ui-router": "",
-    "angular-ui-grid": ""
+    "angular-ui-grid": "",
+    "bootstrap": ""
   },
   "devDependencies": {
     "jasmine-core": "^2.3.4",

@@ -1,19 +1,29 @@
-var app = angular.module('fxaggr', ['ui.router', 'ui.grid']);
+var app = angular.module('fxaggr', ['ui.router', 'ui.grid', 'xeditable']);
 
-app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', 
-    function($scope, $timeout, $http) {
+app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
+    function($scope, $timeout, $http, $state) {
 
         var socket = io.connect();
 
         $scope.outliers = [];
+        $scope.aggrconfig = [];
+        $scope.pricestats = [];
+        $scope.runtimestats = [];
         /*
-         * Handle the quote being sent from node.js server via socket.io
+         * Handle the outliers being sent from node.js server via socket.io
          */
         socket.on('outlier', function(data) {
-            $scope.outliers = [];
-            $scope.outliers.push(data);
+            $scope.outliers = data;
             //for some reason Angular's digest does not seem to pick up scope items
             //that are updated via socket. I haven't had time to research this yet
+            $scope.$apply();
+        });
+
+        /*
+         * Handle the runtimestats being sent from node.js server via socket.io
+         */
+        socket.on('runtimestats', function(data) {
+            $scope.runtimestats = data;
             $scope.$apply();
         });
 
@@ -28,22 +38,71 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http',
         //     $scope.quotes.push(data);
         // };
 
-        // $scope.loadBalance = function() {
-        //     var httpReq = $http.get('/users/balance').
-        //     success(function(data, status, headers, config) {
-        //         //ensure we received a response
-        //         if (data.length < 1) {
-        //             return;
-        //         }
-        //         $scope.balance = data;
-        //         $scope.balance[0].accountvalue = Number(data[0].cashbalance) + Number(data[0].assetvalue);
-        //     }).
-        //     error(function(data, status, headers, config) {
-        //         $scope.balance = {
-        //             "error retrieving balance": status
-        //         };
-        //     });
-        // };
+        $scope.loadAggrConfig = function() {
+            var httpReq = $http.get('/config/aggrconfig').
+            success(function(data, status, headers, config) {
+                //ensure we received a response
+                if (data.length < 1) {
+                    return;
+                }
+                $scope.aggrconfig = data;
+            }).
+            error(function(data, status, headers, config) {
+                $scope.balance = {
+                    "error retrieving aggrconfig": status
+                };
+            });
+        };
+
+        $scope.loadPriceStats = function() {
+            var httpReq = $http.get('/config/aggrpricestats').
+            success(function(data, status, headers, config) {
+                //ensure we received a response
+                if (data.length < 1) {
+                    return;
+                }
+                $scope.pricestats = data;
+            }).
+            error(function(data, status, headers, config) {
+                $scope.balance = {
+                    "error retrieving aggrpricestatsconfig": status
+                };
+            });
+        };
+
+        $scope.saveConfig = function(data, id) {
+            //Update $scope.aggrconfig 
+            var configFound = false;
+            var i = 0;
+            for (i = 0; i < $scope.aggrconfig.length; i++) {
+                if ($scope.aggrconfig[i]._id == id) {
+                    configFound = true;
+                    angular.extend($scope.aggrconfig[i], data);
+                    break;
+                }
+            }
+            if (!configFound) {
+                return "could not update AggrConfig - id not found: " + id;
+            }
+            return $http.post('/config/updateaggrconfig', $scope.aggrconfig[i]);
+
+            var httpReq = $http.post('/users/updatebalance', $scope.balance[0]).
+            success(function(data, status, headers, config) {}).
+            error(function(data, status, headers, config) {});
+        };
+
+        $scope.showOutlierDetail = function() {
+            $scope.selectedOutlier = this.item;
+            $scope.showCurrentPrice = true;
+            $scope.showPreviousPrice = true;
+            $scope.showConfig = true;
+            $scope.showPriceStats = true;
+
+            $state.go('outlierdetail', {
+                outlier: this.item._id
+            });
+        };
+
 
         // $scope.updateBalance = function() {
         //     var httpReq = $http.post('/users/updatebalance', $scope.balance[0]).
@@ -90,10 +149,13 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http',
         //     error(function(data, status, headers, config) {});
         // };
         //This function will execute once the controller is initialised. 
-        $scope.init = function() {
-        };
+        $scope.init = function() {};
 
         //Run the init function on startup
         $scope.init();
     }
 ]);
+
+app.run(function(editableOptions) {
+    editableOptions.theme = 'bs3'; // bootstrap3 theme. Can be also 'bs2', 'default'
+});

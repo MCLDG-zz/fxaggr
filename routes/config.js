@@ -19,22 +19,28 @@ router.get('/aggrpricestats', function(req, res) {
     });
 });
 
-/*
- * POST to userorder.
- */
-router.post('/addaggrconfig', function(req, res) {
+/* Update config */
+router.post('/updateaggrconfig', function(req, res) {
     var db = req.db;
+    var id = req.body._id;
+    var body = req.body;
+    delete body._id;
+
     var collection = db.get('aggrconfig');
-    collection.insert(req.body, function(err, result) {
-        if (err) return;
-        res.send(
-            (err === null) ? {
-                msg: ''
-            } : {
-                msg: err
-            }
-        );
-    });
+    collection.findAndModify({
+            "_id": id
+        }, {
+            "$set": body
+        },
+        function(err, result) {
+            res.send(
+                (err === null) ? {
+                    msg: ''
+                } : {
+                    msg: err
+                }
+            );
+        });
 });
 
 

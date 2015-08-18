@@ -1,0 +1,60 @@
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+
+            <a href="#home" class="navbar-brand" ui-sref="home">
+                <span class="fa fa-home" aria-hidden="true"></span> Outliers
+            </a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="menubar">
+
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="#config" class="hidden-xs" ui-sref="aggrconfig">
+                        <span class="fa fa-balance-scale" aria-hidden="true"></span> Config
+                    </a>
+                    <a href="#config" class="visible-xs" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="fa fa-balance-scale" aria-hidden="true"></span> Config
+                    </a>
+                </li>
+                <li>
+                    <a href="#pricestats" class="hidden-xs" ui-sref="pricestats">
+                        <span class="fa fa-tasks" aria-hidden="true"></span> Price Stats
+                    </a>
+                    <a href="#pricestats" class="visible-xs" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="fa fa-tasks" aria-hidden="true"></span> Price Stats
+                    </a>
+                </li>
+                <li>
+                    <a href="#runtimestats" class="hidden-xs" ui-sref="runtimestats">
+                        <span class="fa fa-tasks" aria-hidden="true"></span> Runtime Stats
+                    </a>
+                    <a href="#runtimestats" class="visible-xs" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="fa fa-tasks" aria-hidden="true"></span> Runtime Stats
+                    </a>
+                </li>
+            </ul>
+
+            <!--Search box-->
+            <form class="navbar-form" role="search" ng-submit="handleSearchSymbolSubmit()">
+                <div class="InputAddOn">
+                    <button type="submit" class="btn InputAddOn-item">
+                        <span class="glyphicon glyphicon-search"></span>
+                    </button>
+                    <input type="text" ng-model="data.symbolToSearch" class="InputAddOn-field form-control" maxlength="10" placeholder="Search">
+                </div>
+            </form>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container-fluid -->
+</nav>
