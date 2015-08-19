@@ -45,10 +45,10 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
                 if (data.length < 1) {
                     return;
                 }
-                $scope.aggrconfig = data;
+                $scope.aggrconfig = data[0];
             }).
             error(function(data, status, headers, config) {
-                $scope.balance = {
+                $scope.aggrconfig = {
                     "error retrieving aggrconfig": status
                 };
             });
@@ -85,10 +85,18 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
                 return "could not update AggrConfig - id not found: " + id;
             }
             return $http.post('/config/updateaggrconfig', $scope.aggrconfig[i]);
+        };
 
-            var httpReq = $http.post('/users/updatebalance', $scope.balance[0]).
-            success(function(data, status, headers, config) {}).
-            error(function(data, status, headers, config) {});
+        /*
+        * $scope.aggrconfig will have been updated directly since there is two-way binding
+        * between the form and the $scope object. Here we just update the DB
+        */
+        $scope.saveGlobalConfig = function(data) {
+            $scope.updateGlobalConfigResult = "Global Config updated successfully";
+            $timeout(function() {
+                $scope.updateGlobalConfigResult = false;
+            }, 10000);
+            return $http.post('/config/updateaggrconfig', $scope.aggrconfig);
         };
 
         $scope.showOutlierDetail = function() {

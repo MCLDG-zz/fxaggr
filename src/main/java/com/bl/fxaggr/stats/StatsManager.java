@@ -81,19 +81,20 @@ public class StatsManager {
         symbolStat.totalNumberOfEvents++;
         
         //Update the filtered event counters
-        if (event.getFilteredEvent()) {
+        if (event.isFilteredEvent()) {
             overallStats.totalNumberOfFilteredEvents++;
             symbolStat.totalNumberOfFilteredEvents++;
             List <PriceEvent.FilterReason> filteredReasons = event.getFilteredReasons();
+            System.out.println("Stats sequence: " + event.getPriceEntity().getSequence() + " number of reasons " + filteredReasons.size());
             for (PriceEvent.FilterReason filteredReason: filteredReasons) {
+                    System.out.println("Stats filteredReason: " + filteredReason);
                 if (overallStats.numberPerFilteredReason.containsKey(filteredReason)) {
                     overallStats.numberPerFilteredReason.replace(filteredReason, overallStats.numberPerFilteredReason.get(filteredReason) + 1);
+                        System.out.println("Stats numberPerFilteredReason: " + overallStats.numberPerFilteredReason.get(filteredReason));
                 } 
                 else {
                     overallStats.numberPerFilteredReason.put(filteredReason, new Long(1));
-                }
-                if (overallStats.totalNumberOfFilteredEvents != overallStats.numberPerFilteredReason.get(filteredReason)) {
-                    System.out.println("Filtered events not matching. Total: " + overallStats.totalNumberOfFilteredEvents + " Reason: " + overallStats.numberPerFilteredReason.get(filteredReason));
+                        System.out.println("Stats numberPerFilteredReason: " + overallStats.numberPerFilteredReason.get(filteredReason));
                 }
                 if (symbolStat.numberPerFilteredReason.containsKey(filteredReason)) {
                     symbolStat.numberPerFilteredReason.replace(filteredReason, symbolStat.numberPerFilteredReason.get(filteredReason) + 1);

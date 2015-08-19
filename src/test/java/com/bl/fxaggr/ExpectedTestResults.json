@@ -1,0 +1,2 @@
+{ "_id" : "1", "totalNumberOfEvents" : 17, "totalNumberOfFilteredEvents" : 15, "numberPerFilteredReason" : { "ASK_SPIKE" : 20 }, "maxSecondsBetweenQuoteTimeAndProcessedTime" : 0, "minSecondsBetweenQuoteTimeAndProcessedTime" : 0 }
+{ "_id" : "USDCAD", "totalNumberOfEvents" : 17, "totalNumberOfFilteredEvents" : 15, "numberPerFilteredReason" : { "ASK_SPIKE" : 20 }, "maxSecondsBetweenQuoteTimeAndProcessedTime" : 0, "minSecondsBetweenQuoteTimeAndProcessedTime" : 0 }

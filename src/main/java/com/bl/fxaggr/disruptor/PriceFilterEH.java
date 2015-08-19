@@ -23,17 +23,18 @@ import com.bl.fxaggr.stats.EventStats;
 
 public class PriceFilterEH implements EventHandler<PriceEvent> {
 	
-	private Map<String, AggrConfig> aggrConfigMap = new HashMap<>();
+	private Map<String, AggrConfigCurrency> aggrcurrencyconfigMap = new HashMap<>();
 	private Map<String, PriceStats> priceStatsMap = new HashMap<>();
 	private Map<String, PreviousPrice> previousPriceMap = new HashMap<>();
+	private Map<String, Long> consecutiveFilteredPriceMap = new HashMap<>();
 	private AggrConfig aggrConfig;
+	private AggrConfigCurrency aggrConfigCurrency;
 	private PriceStats priceStats;
 	private PreviousPrice previousPrice = null;
 	private PriceEntity priceEntity;
 	private MongoDatabase db = null;
 	
-	
-	PriceFilterEH() {
+	public PriceFilterEH() {
 		System.out.println("PriceFilterEH created. Object ID:: " + this.toString()); 
 		MongoClient mongoClient = null;
 		try {
@@ -54,11 +55,14 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
     		@Override
     		public void apply(final Document document) {
    				Gson gson = new Gson();
+		   		System.out.println("aggrConfig JSON: " + document.toJson());
         		aggrConfig = gson.fromJson(document.toJson(), AggrConfig.class);  
-        		aggrConfigMap.put(aggrConfig.symbol, aggrConfig);
     		}
 		});
-   		System.out.println("Number of Config items: " + aggrConfigMap.size());
+		for( AggrConfigCurrency currencyconfig : aggrConfig.currencyconfig) {
+       		aggrcurrencyconfigMap.put(currencyconfig.symbol, currencyconfig);
+		}
+   		System.out.println("Number of CurrencyConfig items: " + aggrcurrencyconfigMap.size());
 
 		//Read the prices stats from the pricestats collection in Mongo
 		iterable = db.getCollection("pricestats").find();
@@ -68,15 +72,10 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
     		public void apply(final Document document) {
    				Gson gson = new Gson();
         		priceStats = gson.fromJson(document.toJson(), PriceStats.class);  
-        		
-        		//manually set the 'symbol' since it is a sub-item in the JSON
-        		Document subDoc = document.get("_id", Document.class);
-        		priceStats.symbol = subDoc.get("symbol", String.class);
-        		priceStats.hour = subDoc.get("hour", Integer.class);
-        		priceStatsMap.put(priceStats.symbol + priceStats.hour, priceStats);
+        		priceStatsMap.put(priceStats._id.symbol + priceStats._id.hour, priceStats);
     		}
 		});
-   		System.out.println("Number of Stats items: " + priceStatsMap.size());
+   		System.out.println("Number of PriceStats items: " + priceStatsMap.size());
 	}
 
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
@@ -87,7 +86,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		double spread = priceEntity.getSpread();
 
 		priceStats = priceStatsMap.get(currency + hour);
-		aggrConfig = aggrConfigMap.get(currency);
+		aggrConfigCurrency = aggrcurrencyconfigMap.get(currency);
 		previousPrice = previousPriceMap.get(currency);
 
 		// System.out.println("PriceFilterEH processing sequence: " + sequence + " currency " + currency + " hour " + hour
@@ -95,11 +94,11 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		// 	+ ". Found matching pricestats: " +  (priceStats != null)); 
 		
 		//Check if the spread falls within the acceptable range
-		if (priceStats == null || aggrConfig == null) {
+		if (priceStats == null || aggrConfigCurrency == null) {
 			System.out.println("PriceFilterEH cannot analyse pricing. No price stats in table pricestats, or no config in table aggrconfig. Currency: " + currency + ". Sequence: " + sequence); 
 		}
 		else {
-			if (spread > Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfig.pctLeewayAllowedSpread / 100))) {
+			if (spread > Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfigCurrency.pctLeewayAllowedSpread / 100))) {
 				this.persistOutliers("Spread of: " + spread + " exceeds average spread for this time period"); 
 				event.setFilteredEvent(true);
 				event.setFilteredReason(PriceEvent.FilterReason.SPREAD_EXCEEDS_AVERAGE);
@@ -107,7 +106,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		}
 		
 		//Check if the bid/ask has spiked/dropped
-		if (aggrConfig != null) {
+		if (aggrConfigCurrency != null) {
 			if (previousPrice != null) {
 				boolean priceSpike = false;
 				/*
@@ -115,8 +114,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 				*/
 				//Calculate the difference between current price and previous price, and check if it exceeds the Leeway
 				double priceDiff = Math.abs(priceEntity.getAsk() - previousPrice.ask);
-				double leewayHi = previousPrice.ask + (previousPrice.ask * aggrConfig.pctLeewayToPreviousAsk / 100);
-				double leewayLo = previousPrice.ask - (previousPrice.ask * aggrConfig.pctLeewayToPreviousAsk / 100);
+				double leewayHi = previousPrice.ask + (previousPrice.ask * aggrConfigCurrency.pctLeewayToPreviousAsk / 100);
+				double leewayLo = previousPrice.ask - (previousPrice.ask * aggrConfigCurrency.pctLeewayToPreviousAsk / 100);
 				// System.out.println("PriceFilterEH check for spikes for sequence: " + sequence 
 				// 	+ " Ask of: " + priceEntity.getAsk() + " hi: "
 				// 	+  leewayHi + " lo: " + leewayLo + ", based on a " + aggrConfig.pctLeewayToPreviousAsk 
@@ -132,8 +131,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 				*/
 				//Calculate the difference between current price and previous price, and check if it exceeds the Leeway
 				priceDiff = Math.abs(priceEntity.getBid() - previousPrice.bid);
-				leewayHi = previousPrice.bid + (previousPrice.bid * aggrConfig.pctLeewayToPreviousBid / 100);
-				leewayLo = previousPrice.bid - (previousPrice.bid * aggrConfig.pctLeewayToPreviousBid / 100);
+				leewayHi = previousPrice.bid + (previousPrice.bid * aggrConfigCurrency.pctLeewayToPreviousBid / 100);
+				leewayLo = previousPrice.bid - (previousPrice.bid * aggrConfigCurrency.pctLeewayToPreviousBid / 100);
 				// System.out.println("PriceFilterEH check for spikes for sequence: " + sequence 
 				// 	+ " Bid of: " + priceEntity.getBid() + " hi: "
 				// 	+  leewayHi + " lo: " + leewayLo + ", based on a " + aggrConfig.pctLeewayToPreviousBid 
@@ -142,7 +141,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 					priceSpike = true;
 					this.persistOutliers("Bid of: " + priceEntity.getBid() + " has spiked/dropped compared to previous price"); 
 					event.setFilteredEvent(true);
-					event.setFilteredReason(PriceEvent.FilterReason.ASK_SPIKE);
+					event.setFilteredReason(PriceEvent.FilterReason.BID_SPIKE);
 				}
 				//Do not store price spikes. They should be treated as anomalies (faulty) and future
 				//prices should not be compared to them
@@ -188,10 +187,17 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	 */
 	private void persistOutliers(String message) {
 		Gson gson = new Gson();
-    	String jsonAggrConfig = gson.toJson(aggrConfig);		
-    	String jsonPriceStats = gson.toJson(priceStats);		
-    	String jsonPreviousPrice = gson.toJson(previousPrice);		
-    	String jsonPriceEntity = gson.toJson(priceEntity);		
+    	String jsonMessage = gson.toJson(message);
+    	String jsonAggrConfig = gson.toJson( (aggrConfig == null) ? new AggrConfig() : aggrConfig );
+    	String jsonPriceStats = gson.toJson( (priceStats == null) ? new PriceStats() : priceStats );
+    	String jsonPreviousPrice = gson.toJson( (previousPrice == null) ? new PreviousPrice() : previousPrice );
+    	String jsonPriceEntity = gson.toJson( (priceEntity == null) ? new PriceEntity() : priceEntity );
+    	// System.out.println("GSON objects null: " + (aggrConfig == null) + (priceStats == null) + (previousPrice == null) + (priceEntity == null));
+    	// System.out.println("jsonAggrConfig: " + jsonAggrConfig);
+    	// System.out.println("jsonPriceStats: " + jsonPriceStats);
+    	// System.out.println("jsonPreviousPrice: " + jsonPreviousPrice);
+    	// System.out.println("jsonPriceEntity: " + jsonPriceEntity);
+    	// System.out.println("GSON objects null: " + (jsonAggrConfig == null) + (jsonPriceStats == null) + (jsonPreviousPrice == null) + (jsonPriceEntity == null));
 		db.getCollection("priceoutliers").insertOne(
 			new Document("priceoutlier",
 				new Document()
@@ -199,24 +205,62 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 					.append("currentpriceentity", Document.parse(jsonPriceEntity))
 					.append("previousprice", Document.parse(jsonPreviousPrice))
 					.append("config", Document.parse(jsonAggrConfig))
-					.append("pricestats", Document.parse(jsonPriceStats))
+					.append("pricestats", Document.parse((jsonPriceStats == null) ? "{}" : jsonPriceStats))
 			)
 		);
 	}
+	
+	/**
+	 * The inner classes below represent this structure, and are used by GSON
+	 * to convert JSON to Java entity classes
+	 * 
+    "globalconfig": {
+        "numberconsecutivespikesfiltered": 3
+    },
+    "currencyconfig": [{
+        "symbol": "AUDCAD",
+        "pctLeewayAllowedSpread": 10.0,
+        "pctLeewayToPreviousBid": 10.0,
+        "pctLeewayToPreviousAsk": 5.5,
+        "pctAboveMaxSpread": 5.0,
+        "pctBelowMinSpread": 2.0
+    }, {
+        "symbol": "EURNZD",
+        "pctLeewayAllowedSpread": 10.0,
+        "pctLeewayToPreviousBid": 10.0,
+        "pctLeewayToPreviousAsk": 1.5,
+        "pctAboveMaxSpread": 5.0,
+        "pctBelowMinSpread": 2.0
+    }]
+})
+	*/
+
 	private class AggrConfig {
+		public globalconfig globalconfig;
+		public AggrConfigCurrency[] currencyconfig;
+	}
+	private class globalconfig {
+		public String numberconsecutivespikesfiltered;
+	}
+	private class AggrConfigCurrency {
 		public String symbol;
 		public double pctLeewayAllowedSpread;
 		public double pctLeewayToPreviousBid;
 		public double pctLeewayToPreviousAsk;
+		public double pctAboveMaxSpread;
+		public double pctBelowMinSpread;
 	}
 	private class PriceStats {
-		public String symbol;
-		public int hour;
+		public PriceID _id;
 		public double averageAsk;
 		public double averageBid;
 		public double averageSpread;
 		public double maxSpread;
 		public double minSpread;
+	}
+	private class PriceID {
+		public String symbol;
+		public int hour;
 	}
 	private class PreviousPrice {
 		public String symbol;

@@ -34,7 +34,7 @@ public class PriceEvent {
     public void setFilteredEvent(boolean filteredEvent) {
         this.filteredEvent = filteredEvent;
     }
-    public boolean getFilteredEvent() {
+    public boolean isFilteredEvent() {
         return filteredEvent;
     }
     
