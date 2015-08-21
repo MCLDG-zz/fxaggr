@@ -1,7 +1,13 @@
-var app = angular.module('fxaggr', ['ui.router', 'ui.grid', 'xeditable']);
+var app = angular.module('fxaggr', ['ui.router', 'ui.grid', 'xeditable', 'chart.js']);
 
 app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
     function($scope, $timeout, $http, $state) {
+
+  $scope.linechartdata = [
+  ];
+  $scope.onClick = function (points, evt) {
+    console.log(points, evt);
+  };
 
         var socket = io.connect();
 
@@ -9,6 +15,11 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
         $scope.aggrconfig = [];
         $scope.pricestats = [];
         $scope.runtimestats = [];
+        $scope.liquidityProviders = [];
+        $scope.liquidityProvider;
+        $scope.currencies = [];
+        $scope.currencytotalstats = [];
+        $scope.currencyfilterstats = [];
         /*
          * Handle the outliers being sent from node.js server via socket.io
          */
@@ -24,6 +35,17 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
          */
         socket.on('runtimestats', function(data) {
             $scope.runtimestats = data;
+            $scope.currencies = [];
+            $scope.currencystats = [];
+            for (var i=0; i < data.length; i++) {
+                if (data[i]._id != "1") {
+                    $scope.currencies.push(data[i]._id);
+                    $scope.currencytotalstats.push(data[i].totalNumberOfEvents);
+                    $scope.currencyfilterstats.push(data[i].totalNumberOfEvents);
+                    $scope.linechartdata.push($scope.currencytotalstats);
+                    $scope.linechartdata.push($scope.currencyfilterstats);
+                }
+            }
             $scope.$apply();
         });
 
@@ -70,21 +92,21 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
             });
         };
 
-        $scope.saveConfig = function(data, id) {
+        $scope.saveCurrencyConfig = function(data, symbol) {
             //Update $scope.aggrconfig 
             var configFound = false;
             var i = 0;
-            for (i = 0; i < $scope.aggrconfig.length; i++) {
-                if ($scope.aggrconfig[i]._id == id) {
+            for (i = 0; i < $scope.aggrconfig.currencyconfig.length; i++) {
+                if ($scope.aggrconfig.currencyconfig[i].symbol == symbol) {
                     configFound = true;
-                    angular.extend($scope.aggrconfig[i], data);
+                    angular.extend($scope.aggrconfig.currencyconfig[i], data);
                     break;
                 }
             }
             if (!configFound) {
                 return "could not update AggrConfig - id not found: " + id;
             }
-            return $http.post('/config/updateaggrconfig', $scope.aggrconfig[i]);
+            return $http.post('/config/updateaggrconfig', $scope.aggrconfig);
         };
 
         /*
@@ -111,6 +133,15 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
             });
         };
 
+        // Add/remove liquidity providers
+        $scope.addLiquidityProvider = function() {
+            $scope.aggrconfig.globalconfig.liquidityproviders.push(this.globalconfig.addLiquidityProvider);
+        }
+        $scope.removeLiquidityProvider = function(provider) {
+            if ($scope.aggrconfig.globalconfig.liquidityproviders.indexOf(this.globalconfigform.selectedliquidityprovider) != -1) {
+                $scope.aggrconfig.globalconfig.liquidityproviders.splice($scope.aggrconfig.globalconfig.liquidityproviders.indexOf(this.globalconfigform.selectedliquidityprovider),1);
+            }
+        }
 
         // $scope.updateBalance = function() {
         //     var httpReq = $http.post('/users/updatebalance', $scope.balance[0]).
@@ -157,7 +188,10 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
         //     error(function(data, status, headers, config) {});
         // };
         //This function will execute once the controller is initialised. 
-        $scope.init = function() {};
+        $scope.init = function() {
+            $scope.loadAggrConfig();
+            $scope.loadPriceStats();
+        };
 
         //Run the init function on startup
         $scope.init();
@@ -167,3 +201,16 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
 app.run(function(editableOptions) {
     editableOptions.theme = 'bs3'; // bootstrap3 theme. Can be also 'bs2', 'default'
 });
+
+
+app.config(function (ChartJsProvider) {
+    // Configure all charts
+    ChartJsProvider.setOptions({
+      colours: ['#97BBCD', '#DCDCDC', '#F7464A', '#46BFBD', '#FDB45C', '#949FB1', '#4D5360'],
+      responsive: true
+    });
+    // Configure all doughnut charts
+    ChartJsProvider.setOptions('Doughnut', {
+      animateScale: true
+    });
+  });

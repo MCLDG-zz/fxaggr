@@ -1,0 +1,28 @@
+
+<div class="col-lg-6 col-sm-12" id="line-chart" ng-controller="LineCtrl">
+    <div class="panel panel-default">
+        <div class="panel-heading">Line Chart</div>
+        <div class="panel-body">
+            <canvas id="line" class="chart chart-line" data="linechartdata" labels="labels"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="col-lg-6 col-sm-12" id="line-chart" ng-controller="fxaggrCtrl">
+    <div class="panel panel-default">
+        <div class="panel-heading">Line Chart</div>
+        <div class="panel-body">
+            <canvas id="line" class="chart chart-line" data="linechartdata" labels="currencies"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="col-lg-6 col-sm-12" id="bar-chart" ng-controller="fxaggrCtrl">
+    <div class="panel panel-default">
+        <div class="panel-heading">Bar Chart</div>
+        <div class="panel-body">
+            <canvas id="bar" class="chart chart-bar" data="linechartdata" labels="currencies"></canvas>
+        </div>
+    </div>
+</div>
+

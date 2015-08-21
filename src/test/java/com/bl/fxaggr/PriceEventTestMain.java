@@ -22,13 +22,15 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.MongoClient;
 import com.mongodb.util.JSON;
 import org.bson.Document;
 import com.mongodb.Block;
 import com.mongodb.client.FindIterable;
+
+import com.google.gson.JsonParser;
+import com.google.gson.JsonElement;
 
 public class PriceEventTestMain extends Thread {
     public static long producerCount = 99998;
@@ -75,7 +77,7 @@ public class PriceEventTestMain extends Thread {
         System.out.println("Data producer completed at: " + dateFormat.format(dateEnd));
 
         //Check test results
-        Thread.sleep(10000);
+        Thread.sleep(5000);
         checkTestResults();
     }
     /**
@@ -116,7 +118,12 @@ public class PriceEventTestMain extends Thread {
                         actualResult = document.toJson();
                     }
                 });
-                if (!actualResult.equals(line)) {
+                
+                //Compare actual vs. expected results
+                JsonParser parser = new JsonParser();
+                JsonElement o1 = parser.parse(actualResult);
+                JsonElement o2 = parser.parse(line);
+                if (!o1.equals(o2)) {
                     System.out.println("Test data result checker - expected results DO NOT MATCH!! Actual: " + actualResult + " Expected: " + line + ". Equal? " + actualResult.equals(line));
                     return false;
                 }

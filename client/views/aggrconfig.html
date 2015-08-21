@@ -1,38 +1,55 @@
-<div ng-init="loadAggrConfig()">
+<div class="row">
+    <div class="alert-success" ng-show="updateGlobalConfigResult">
+        <div>
+            <p>{{updateGlobalConfigResult}}</p>
+        </div>
+    </div>
 </div>
-
-                      <div class="row">
-                        <div class="alert-success" ng-show="updateGlobalConfigResult">
-                          <div>
-                            <p>{{updateGlobalConfigResult}}</p>
-                          </div>
-                        </div>
-                      </div>
 
 <form class="form-horizontal" role="form" ng-submit="saveGlobalConfig()" name="globalConfigForm">
     <div class="form-group has-feedback">
-        <div class="list">
-            <table class="table table-striped table-bordered table table-condensed table-responsive">
-                <thead>
-                    <tr>
-                        <th colspan="2">Global Config</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Number of Consecutive Spikes that are Filtered</td>
-                        <td>
-                            <input type="number" required min="0" class="form-control" id="numberconsecutivespikesfiltered" name="numberconsecutivespikesfiltered" ng-model="aggrconfig.globalconfig.numberconsecutivespikesfiltered">
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <table class="table table-striped table-bordered table table-condensed table-responsive">
+            <thead>
+                <tr>
+                    <th colspan="2">Global Config</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Accept after # Consecutive Spikes</td>
+                    <td>
+                        <input type="number" required min="0" class="form-control" id="numberconsecutivespikesfiltered" name="numberconsecutivespikesfiltered" ng-model="aggrconfig.globalconfig.numberconsecutivespikesfiltered">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Liquidity Providers</td>
+                    <td>
+                        <div class="input-group">
+                            <span class="input-group-btn">
+                                <a href class="btn btn-danger" ng-click="removeLiquidityProvider()">Remove</a>
+                            </span>
+                            <select size="5" ng-model="globalconfigform.selectedliquidityprovider" name="liquidityProviders" ng-options="i for i in aggrconfig.globalconfig.liquidityproviders"></select>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-btn">
+                                <a href class="btn btn-success InputAddOn-item" ng-click="addLiquidityProvider()">Add</a>
+                            </span>
+                            <input type="text" class="InputAddOn-field form-control" ng-model="globalconfig.addLiquidityProvider" placeholder="Add Liquidity Provider">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Primary Liquidity Provider</td>
+                    <td>
+                        <select ng-model="aggrconfig.globalconfig.primaryliquidityprovider" class="form-control" name="primaryLiquidityProvider" ng-options="i for i in aggrconfig.globalconfig.liquidityproviders">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
         <div>
             <button type="submit" class="btn btn-primary" ng-disabled="globalConfigForm.$invalid">Update</button>
             <button type="button" ng-click="loadAggrConfig()" class="btn">Cancel</button>
         </div>
-
     </div>
 </form>
 
@@ -50,7 +67,11 @@
     <!-- This can be added to the tbody repeat below to create a highlight-on-click: ng-class="{'highlightSelectedRow':$index == selectedOrderRow}" -->
     <tbody data-ng-repeat='item in aggrconfig.currencyconfig' class="list">
         <tr>
-            <td class="span2">{{item.symbol}}</td>
+            <td>
+                <span e-name="symbol" e-form="rowform" e-disabled>
+                    {{ item.symbol || 'empty' }}
+                </span>
+            </td>
             <td>
                 <span editable-number="item.pctLeewayAllowedSpread" e-name="pctLeewayAllowedSpread" e-form="rowform" e-min="0" e-required>
                     {{ item.pctLeewayAllowedSpread || 'empty' }}
@@ -78,7 +99,7 @@
             </td>
             <td style="white-space: nowrap">
                 <!-- form -->
-                <form editable-form name="rowform" onbeforesave="saveConfig($data, item._id)" ng-show="rowform.$visible" class="form-buttons form-inline" shown="inserted == user">
+                <form editable-form name="rowform" onbeforesave="saveCurrencyConfig($data, item.symbol)" ng-show="rowform.$visible" class="form-buttons form-inline" shown="inserted == user">
                     <button type="submit" ng-disabled="rowform.$waiting" class="btn btn-primary">
                         save
                     </button>

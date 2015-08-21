@@ -28,6 +28,11 @@ fxApp.config(function($stateProvider, $urlRouterProvider) {
         templateUrl: 'views/runtimestats.html'
     })
 
+    .state('dashboard', {
+        url: '/dashboard',
+        templateUrl: 'views/dashboard.html'
+    })
+
     .state('outlierdetail', {
         url: '/outlierdetail/:outlierID',
         templateUrl: 'views/outlierdetail.html',

@@ -15,10 +15,12 @@ import java.util.ArrayList;
  */
 public class PriceEvent {
     private PriceEntity priceEntity;
-    private boolean filteredEvent;
+    private boolean filteredEvent = false;
     private List<FilterReason> filterReasons = new ArrayList<>();
+    private List<String> eventAuditTrail = new ArrayList<>();
     
     public enum FilterReason {
+		NEGATIVE_SPREAD,
 		SPREAD_EXCEEDS_AVERAGE,
 		ASK_SPIKE,
 		BID_SPIKE
@@ -44,4 +46,12 @@ public class PriceEvent {
     public List<FilterReason> getFilteredReasons() {
         return filterReasons;
     }
+
+    public boolean addAuditEvent(String auditEvent) {
+        return this.eventAuditTrail.add(auditEvent);
+    }
+    public List<String> getEventAuditTrail() {
+        return eventAuditTrail;
+    }
+    
 }

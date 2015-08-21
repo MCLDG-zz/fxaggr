@@ -20,7 +20,7 @@ import com.google.gson.Gson;
  */
 public class JournalToMongoEventHandler implements EventHandler<PriceEvent> {
 	DB db = null;
-	DBCollection PriceColl;
+	DBCollection priceevents;
 
 	public JournalToMongoEventHandler() {
 		MongoClient mongoClient = null;
@@ -32,15 +32,15 @@ public class JournalToMongoEventHandler implements EventHandler<PriceEvent> {
 			e.printStackTrace();
 		}
 		db = mongoClient.getDB("fxaggr");
-		PriceColl = db.getCollection("PriceColl");
-		System.out.println("Connection to Mongo created: " + PriceColl.hashCode());
+		priceevents = db.getCollection("priceevents");
+		System.out.println("Connection to Mongo created: " + priceevents.hashCode());
 	}
 
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
 		//Convert the PriceEntity to JSON
 		PriceEntity priceEntity = event.getPriceEntity();
 		Gson gson = new Gson();
-    	String json = gson.toJson(priceEntity);
+    	String json = gson.toJson(event);
 
     	//Write to Mongo
 		this.journalToMongo(json);
@@ -58,6 +58,6 @@ public class JournalToMongoEventHandler implements EventHandler<PriceEvent> {
 	 */
 	private void journalToMongo(String content) {
 		DBObject dbObject = (DBObject)JSON.parse(content);
-		db.getCollection("PriceColl").insert(dbObject);
+		db.getCollection("priceevents").insert(dbObject);
 	}
 }

@@ -81,20 +81,21 @@ public class StatsManager {
         symbolStat.totalNumberOfEvents++;
         
         //Update the filtered event counters
+		System.out.println("Sequence: " + event.getPriceEntity().getSequence() + ". Stats filtered event?" + event.isFilteredEvent()); 
         if (event.isFilteredEvent()) {
             overallStats.totalNumberOfFilteredEvents++;
             symbolStat.totalNumberOfFilteredEvents++;
             List <PriceEvent.FilterReason> filteredReasons = event.getFilteredReasons();
-            System.out.println("Stats sequence: " + event.getPriceEntity().getSequence() + " number of reasons " + filteredReasons.size());
+            System.out.println("Sequence: " + event.getPriceEntity().getSequence() + ". Stats. number of reasons " + filteredReasons.size());
             for (PriceEvent.FilterReason filteredReason: filteredReasons) {
-                    System.out.println("Stats filteredReason: " + filteredReason);
+                    System.out.println("Sequence: " + event.getPriceEntity().getSequence() + "Stats filteredReason: " + filteredReason);
                 if (overallStats.numberPerFilteredReason.containsKey(filteredReason)) {
                     overallStats.numberPerFilteredReason.replace(filteredReason, overallStats.numberPerFilteredReason.get(filteredReason) + 1);
-                        System.out.println("Stats numberPerFilteredReason: " + overallStats.numberPerFilteredReason.get(filteredReason));
+                        System.out.println("Sequence: " + event.getPriceEntity().getSequence() + "Stats numberPerFilteredReason: " + overallStats.numberPerFilteredReason.get(filteredReason));
                 } 
                 else {
                     overallStats.numberPerFilteredReason.put(filteredReason, new Long(1));
-                        System.out.println("Stats numberPerFilteredReason: " + overallStats.numberPerFilteredReason.get(filteredReason));
+                        System.out.println("Sequence: " + event.getPriceEntity().getSequence() + "Stats numberPerFilteredReason: " + overallStats.numberPerFilteredReason.get(filteredReason));
                 }
                 if (symbolStat.numberPerFilteredReason.containsKey(filteredReason)) {
                     symbolStat.numberPerFilteredReason.replace(filteredReason, symbolStat.numberPerFilteredReason.get(filteredReason) + 1);
@@ -106,7 +107,6 @@ public class StatsManager {
         }
     }
     private static void persistStats() {
-    
     	//Convert the stats to JSON and write to DB
 		Gson gson = new Gson();
     	String jsonOverallStats = gson.toJson(overallStats);
@@ -119,9 +119,7 @@ public class StatsManager {
         	//Write to Mongo
     		journalToMongo("symbol", symbolStatsID, jsonSymbolStats);
         }
-
     }
-
 	/**
 	 * Write the event to MongoDB
 	 */
