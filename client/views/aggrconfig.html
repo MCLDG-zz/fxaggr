@@ -44,6 +44,12 @@
                         <select ng-model="aggrconfig.globalconfig.primaryliquidityprovider" class="form-control" name="primaryLiquidityProvider" ng-options="i for i in aggrconfig.globalconfig.liquidityproviders">
                     </td>
                 </tr>
+                <tr>
+                    <td>Price Selection Scheme</td>
+                    <td>
+                        <select ng-model="aggrconfig.globalconfig.scheme" class="form-control" name="scheme" ng-options="i for i in aggrconfig.globalconfig.availableschemes">
+                    </td>
+                </tr>
             </tbody>
         </table>
         <div>

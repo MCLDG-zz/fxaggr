@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * You would think that by now the useless Java group would have fixed
+ * You would think that by now the Java working group would have fixed
  * the need to use getters and setters and provided a simple, declarative
  * way of declaring them; they are a complete waste of time
  *
@@ -16,6 +16,8 @@ import java.util.ArrayList;
 public class PriceEvent {
     private PriceEntity priceEntity;
     private boolean filteredEvent = false;
+    private boolean ignoreEvent = false;
+    private boolean waitForPrimary = false;
     private List<FilterReason> filterReasons = new ArrayList<>();
     private List<String> eventAuditTrail = new ArrayList<>();
     
@@ -38,6 +40,20 @@ public class PriceEvent {
     }
     public boolean isFilteredEvent() {
         return filteredEvent;
+    }
+    
+    public void setIgnoreEvent(boolean ignoreEvent) {
+        this.ignoreEvent = ignoreEvent;
+    }
+    public boolean isIgnoreEvent() {
+        return ignoreEvent;
+    }
+    
+    public void setWaitForPrimary(boolean waitForPrimary) {
+        this.waitForPrimary = waitForPrimary;
+    }
+    public boolean isWaitForPrimary() {
+        return waitForPrimary;
     }
     
     public boolean setFilteredReason(FilterReason filteredReason) {

@@ -54,10 +54,13 @@ public class PriceEventTestMain extends Thread {
 
         EventHandler < PriceEvent > eh1 = new JournalToMongoEventHandler();
         EventHandler < PriceEvent > eh3 = new PriceFilterEH();
-        EventHandler < PriceEvent > eh4 = new PriceParserEventHandler();
+        EventHandler < PriceEvent > eh4 = new PriceCompareEH();
+        EventHandler < PriceEvent > eh5 = new StatsEH();
+        EventHandler < PriceEvent > eh6 = new PrimaryBidAskEH();
+        EventHandler < PriceEvent > eh7 = new PrimaryBidAskWaitEH();
 
         // Connect the handler
-        disruptor.handleEventsWith(eh3).then(eh1);
+        disruptor.handleEventsWith(eh3).then(eh6).then(eh7).then(eh1, eh5);
 
         // Start the Disruptor, starts all threads running
         disruptor.start();

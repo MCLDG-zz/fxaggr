@@ -26,7 +26,7 @@ public class PriceEventTestGenerator implements Runnable {
     public void run() {
         Thread t = Thread.currentThread();
         
-        File testfile = new File("/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestFilter.csv");
+        File testfile = new File("/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestCompare - priority.csv");
         try {
                 DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
                 Date dateStart = new Date();
@@ -53,6 +53,7 @@ public class PriceEventTestGenerator implements Runnable {
                     priceEvent.getPriceEntity().setBid(Double.valueOf(tokens[1]));
                     priceEvent.getPriceEntity().setAsk(Double.valueOf(tokens[2]));
                     priceEvent.getPriceEntity().setSpread(priceEvent.getPriceEntity().getAsk() - priceEvent.getPriceEntity().getBid());
+                    priceEvent.getPriceEntity().setLiquidityProvider(tokens[3]);
                     priceEvent.getPriceEntity().setSymbol(tokens[4]);
                     ringBuffer.publish(sequence);
                 }

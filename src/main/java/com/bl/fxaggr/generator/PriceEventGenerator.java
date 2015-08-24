@@ -59,6 +59,7 @@ public class PriceEventGenerator implements Runnable {
                     priceEvent.getPriceEntity().setAsk(Double.valueOf(tokens[2]));
                     priceEvent.getPriceEntity().setSpread(priceEvent.getPriceEntity().getAsk() - priceEvent.getPriceEntity().getBid());
                     priceEvent.getPriceEntity().setSymbol(csvFile.getName().substring(0,csvFile.getName().indexOf(".")));
+                    priceEvent.getPriceEntity().setLiquidityProvider(tokens[3]);
                     ringBuffer.publish(sequence);
                     // System.out.println("Data producer - published sequence: " + sequence + " bid: " 
                     //     + priceEvent.getPriceEntity().getBid() + " ask: " + priceEvent.getPriceEntity().getAsk()

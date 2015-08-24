@@ -35,7 +35,9 @@ db.aggrconfig.insert({
     "globalconfig": {
         "numberconsecutivespikesfiltered": 3,
         "liquidityproviders": ["Deutsche Bank", "Citibank", "Bloomberg"],
-        "primaryliquidityprovider": "Bloomberg"
+        "primaryliquidityprovider": "Bloomberg",
+        "availableschemes": ["Primary Bid/Ask", "Primary Bid/Best Ask", "Best Bid/Primary Ask", "Best Bid/Ask"],
+        "scheme": "Primary Bid/Ask"
     },
     "currencyconfig": [{
         "symbol": "USDCAD",

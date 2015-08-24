@@ -3,12 +3,6 @@ var app = angular.module('fxaggr', ['ui.router', 'ui.grid', 'xeditable', 'chart.
 app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
     function($scope, $timeout, $http, $state) {
 
-  $scope.linechartdata = [
-  ];
-  $scope.onClick = function (points, evt) {
-    console.log(points, evt);
-  };
-
         var socket = io.connect();
 
         $scope.outliers = [];
@@ -17,9 +11,31 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
         $scope.runtimestats = [];
         $scope.liquidityProviders = [];
         $scope.liquidityProvider;
+
+        /*
+         * Scope items used for graphing statistics
+         */
         $scope.currencies = [];
-        $scope.currencytotalstats = [];
-        $scope.currencyfilterstats = [];
+        $scope.filtertype = [];
+        $scope.filtertypecount = [];
+        $scope.filtertypechartdata = [];
+        $scope.currencychartdata = [];
+        $scope.currencyevents = [];
+        $scope.currencyfilteredevents = [];
+        $scope.totalchartdata = [];
+        $scope.totalevents = [];
+        $scope.totalfilteredevents = [];
+        $scope.totaltrendevents = [];
+        $scope.totaltrendfilteredevents = [];
+        $scope.totaltrendchartdata = [];
+        $scope.totaltrendchartdata[0] = $scope.totaltrendevents;
+        $scope.totaltrendchartdata[1] = $scope.totaltrendfilteredevents;
+        $scope.totalchartlabel = ['Total vs. Filtered'];
+        $scope.onClick = function(points, evt) {
+            console.log(points, evt);
+        };
+
+
         /*
          * Handle the outliers being sent from node.js server via socket.io
          */
@@ -36,16 +52,37 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
         socket.on('runtimestats', function(data) {
             $scope.runtimestats = data;
             $scope.currencies = [];
-            $scope.currencystats = [];
-            for (var i=0; i < data.length; i++) {
+            $scope.currencyevents = [];
+            $scope.currencyfilteredevents = [];
+            $scope.totalchartdata = [];
+            $scope.totalevents = [];
+            $scope.totalfilteredevents = [];
+            for (var i = 0; i < data.length; i++) {
                 if (data[i]._id != "1") {
                     $scope.currencies.push(data[i]._id);
-                    $scope.currencytotalstats.push(data[i].totalNumberOfEvents);
-                    $scope.currencyfilterstats.push(data[i].totalNumberOfEvents);
-                    $scope.linechartdata.push($scope.currencytotalstats);
-                    $scope.linechartdata.push($scope.currencyfilterstats);
+                    $scope.currencyevents.push(data[i].totalNumberOfEvents);
+                    $scope.currencyfilteredevents.push(data[i].totalNumberOfFilteredEvents);
+                }
+                else {
+                    $scope.filtertype = [];
+                    $scope.filtertypecount = [];
+                    for (var key in data[i].numberPerFilteredReason) {
+                        if (data[i].numberPerFilteredReason.hasOwnProperty(key)) {
+                            $scope.filtertype.push(key);
+                            $scope.filtertypecount.push(data[i].numberPerFilteredReason[key]);
+                            $scope.filtertypechartdata[0] = $scope.filtertypecount;
+                        }
+                    }
+                    $scope.totalevents.push(data[i].totalNumberOfEvents);
+                    $scope.totalfilteredevents.push(data[i].totalNumberOfFilteredEvents);
+                    $scope.totalchartdata[0] = $scope.totalevents;
+                    $scope.totalchartdata[1] = $scope.totalfilteredevents;
+                    $scope.totaltrendevents.push(data[i].totalNumberOfEvents);
+                    $scope.totaltrendfilteredevents.push(data[i].totalNumberOfFilteredEvents);
                 }
             }
+            $scope.currencychartdata[0] = $scope.currencyevents;
+            $scope.currencychartdata[1] = $scope.currencyfilteredevents;
             $scope.$apply();
         });
 
@@ -110,9 +147,9 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
         };
 
         /*
-        * $scope.aggrconfig will have been updated directly since there is two-way binding
-        * between the form and the $scope object. Here we just update the DB
-        */
+         * $scope.aggrconfig will have been updated directly since there is two-way binding
+         * between the form and the $scope object. Here we just update the DB
+         */
         $scope.saveGlobalConfig = function(data) {
             $scope.updateGlobalConfigResult = "Global Config updated successfully";
             $timeout(function() {
@@ -139,7 +176,7 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
         }
         $scope.removeLiquidityProvider = function(provider) {
             if ($scope.aggrconfig.globalconfig.liquidityproviders.indexOf(this.globalconfigform.selectedliquidityprovider) != -1) {
-                $scope.aggrconfig.globalconfig.liquidityproviders.splice($scope.aggrconfig.globalconfig.liquidityproviders.indexOf(this.globalconfigform.selectedliquidityprovider),1);
+                $scope.aggrconfig.globalconfig.liquidityproviders.splice($scope.aggrconfig.globalconfig.liquidityproviders.indexOf(this.globalconfigform.selectedliquidityprovider), 1);
             }
         }
 
@@ -203,14 +240,14 @@ app.run(function(editableOptions) {
 });
 
 
-app.config(function (ChartJsProvider) {
+app.config(function(ChartJsProvider) {
     // Configure all charts
     ChartJsProvider.setOptions({
-      colours: ['#97BBCD', '#DCDCDC', '#F7464A', '#46BFBD', '#FDB45C', '#949FB1', '#4D5360'],
-      responsive: true
+        colours: ['#97BBCD', '#DCDCDC', '#F7464A', '#46BFBD', '#FDB45C', '#949FB1', '#4D5360'],
+        responsive: true
     });
     // Configure all doughnut charts
     ChartJsProvider.setOptions('Doughnut', {
-      animateScale: true
+        animateScale: true
     });
-  });
+});

@@ -7,6 +7,7 @@ public class PriceEntity {
 	private String dealJSON = null;
 	private long sequence;
     private String symbol;
+    private String liquidityProvider;
     private double open;
     private double close;
     private double bid;
@@ -36,6 +37,9 @@ public class PriceEntity {
     public void setSymbol(String symbol) {
         this.symbol = symbol;
     }
+    public void setLiquidityProvider(String liquidityProvider) {
+        this.liquidityProvider = liquidityProvider;
+    }
     public void setOpen(double open) {
         this.open = open;
     }
@@ -62,6 +66,9 @@ public class PriceEntity {
     }
     public String getSymbol() {
         return this.symbol;
+    }
+    public String getLiquidityProvider() {
+        return this.liquidityProvider;
     }
     public double getOpen() {
         return this.open;

@@ -1,0 +1,4 @@
+20141102 170018643,1.000000,1.100000,Bloomberg,USDCAD,"ACCEPTED - base price for priority feed"
+20141102 170018643,1.000000,1.100000,Bloomberg,USDCAD,"ACCEPTED - next price for priority feed"
+20141102 170018643,1.000000,1.100000,Citibank,USDCAD,"IGNORED - not priority feed"
+20141102 170018643,1.000000,1.100000,Bloomberg,USDCAD,"ACCEPTED - next price for priority feed"

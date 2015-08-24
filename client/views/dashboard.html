@@ -1,3 +1,30 @@
+<div class="col-lg-6 col-sm-12" id="bar-chart" ng-controller="fxaggrCtrl">
+    <div class="panel panel-default">
+        <div class="panel-heading">Filtered Events by Type</div>
+        <div class="panel-body">
+            <canvas id="bar" class="chart chart-bar" data="filtertypechartdata" labels="filtertype"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="col-lg-6 col-sm-12" id="bar-chart" ng-controller="fxaggrCtrl">
+    <div class="panel panel-default">
+        <div class="panel-heading">Filtered Events by Currency</div>
+        <div class="panel-body">
+            <canvas id="bar" class="chart chart-bar" data="currencychartdata" labels="currencies"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="col-lg-6 col-sm-12" id="bar-chart" ng-controller="fxaggrCtrl">
+    <div class="panel panel-default">
+        <div class="panel-heading">Total Filtered Events</div>
+        <div class="panel-body">
+            <canvas id="bar" class="chart chart-bar" data="totalchartdata" labels="totalchartlabel"></canvas>
+        </div>
+    </div>
+</div>
+
 
 <div class="col-lg-6 col-sm-12" id="line-chart" ng-controller="LineCtrl">
     <div class="panel panel-default">
@@ -10,18 +37,9 @@
 
 <div class="col-lg-6 col-sm-12" id="line-chart" ng-controller="fxaggrCtrl">
     <div class="panel panel-default">
-        <div class="panel-heading">Line Chart</div>
+        <div class="panel-heading">Filtered Event Trend</div>
         <div class="panel-body">
-            <canvas id="line" class="chart chart-line" data="linechartdata" labels="currencies"></canvas>
-        </div>
-    </div>
-</div>
-
-<div class="col-lg-6 col-sm-12" id="bar-chart" ng-controller="fxaggrCtrl">
-    <div class="panel panel-default">
-        <div class="panel-heading">Bar Chart</div>
-        <div class="panel-body">
-            <canvas id="bar" class="chart chart-bar" data="linechartdata" labels="currencies"></canvas>
+            <canvas id="line" class="chart chart-line" data="totaltrendchartdata" labels="labels"></canvas>
         </div>
     </div>
 </div>

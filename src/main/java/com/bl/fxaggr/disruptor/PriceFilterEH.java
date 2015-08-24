@@ -18,9 +18,6 @@ import com.mongodb.client.FindIterable;
 
 import com.google.gson.Gson;
 
-import com.bl.fxaggr.stats.StatsManager;
-import com.bl.fxaggr.stats.EventStats;
-
 public class PriceFilterEH implements EventHandler<PriceEvent> {
 	
 	private Map<String, AggrConfigCurrency> aggrcurrencyconfigMap = new HashMap<>();
@@ -94,7 +91,6 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 			event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Negative spread. Spread is: " + spread); 
 			event.setFilteredEvent(true);
 			event.setFilteredReason(PriceEvent.FilterReason.NEGATIVE_SPREAD);
-			StatsManager.eventReceived(event);
 			return;
 		}
 		
@@ -262,8 +258,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		//Log the stats
 		System.out.println("Sequence: " + sequence + ". PriceFilterEH filtered event?" + event.isFilteredEvent()); 
 		event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". PriceFilterEH filtered event?" + event.isFilteredEvent()); 
-		StatsManager.eventReceived(event);
-		
+
 		if (sequence == PriceEventMain.producerCount) {
 	        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
 	        Date dateEnd = new Date();
@@ -335,6 +330,10 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	}
 	private class globalconfig {
 		public int numberconsecutivespikesfiltered;
+		public String[] liquidityproviders;
+		public String[] availableschemes;
+		public String primaryliquidityprovider;
+		public String scheme;
 	}
 	private class AggrConfigCurrency {
 		public String symbol;
