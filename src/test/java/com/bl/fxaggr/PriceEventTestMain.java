@@ -52,15 +52,17 @@ public class PriceEventTestMain extends Thread {
             executor, ProducerType.SINGLE,
             new com.lmax.disruptor.BlockingWaitStrategy());
 
-        EventHandler < PriceEvent > eh1 = new JournalToMongoEventHandler();
         EventHandler < PriceEvent > eh3 = new PriceFilterEH();
-        EventHandler < PriceEvent > eh4 = new PriceCompareEH();
         EventHandler < PriceEvent > eh5 = new StatsEH();
         EventHandler < PriceEvent > eh6 = new PrimaryBidAskEH();
-        EventHandler < PriceEvent > eh7 = new PrimaryBidAskWaitEH();
+        EventHandler < PriceEvent > eh20 = new PriceEventToMongoEH();
+        EventHandler < PriceEvent > eh21 = new PriceToConsumerEH();
 
         // Connect the handler
-        disruptor.handleEventsWith(eh3).then(eh6).then(eh7).then(eh1, eh5);
+        // TODO - I'm sure we can do this more efficiently. For instance, PriceEventToMongoEH
+        // does not have to complete before PriceFilterEH starts. We sort of want a copy of 
+        // the event to be persisted to Mongo asynchronously while we start on the filtering.
+        disruptor.handleEventsWith(eh3,eh20).then(eh6).then(eh5, eh20, eh21);
 
         // Start the Disruptor, starts all threads running
         disruptor.start();

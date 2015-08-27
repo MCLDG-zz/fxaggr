@@ -15,9 +15,8 @@ import java.util.ArrayList;
  */
 public class PriceEvent {
     private PriceEntity priceEntity;
-    private boolean filteredEvent = false;
-    private boolean ignoreEvent = false;
-    private boolean waitForPrimary = false;
+    private EventStatus eventStatus = EventStatus.VALID;
+    private EventState eventState = EventState.NEW_QUOTE;
     private List<FilterReason> filterReasons = new ArrayList<>();
     private List<String> eventAuditTrail = new ArrayList<>();
     
@@ -25,7 +24,20 @@ public class PriceEvent {
 		NEGATIVE_SPREAD,
 		SPREAD_EXCEEDS_AVERAGE,
 		ASK_SPIKE,
-		BID_SPIKE
+		BID_SPIKE,
+		NOT_PRIMARY
+	}
+    
+    public enum EventStatus {
+		FILTERED,
+		VALID
+	}
+    
+    public enum EventState {
+		NEW_QUOTE,
+		FILTER_COMPLETED,
+		COMPARISON_COMPLETED,
+		FINAL_QUOTE
 	}
     
     public void setPriceEntity(PriceEntity priceEntity) {
@@ -35,28 +47,21 @@ public class PriceEvent {
         return priceEntity;
     }
 
-    public void setFilteredEvent(boolean filteredEvent) {
-        this.filteredEvent = filteredEvent;
+    public void setEventStatus(EventStatus eventStatus) {
+        this.eventStatus = eventStatus;
     }
-    public boolean isFilteredEvent() {
-        return filteredEvent;
-    }
-    
-    public void setIgnoreEvent(boolean ignoreEvent) {
-        this.ignoreEvent = ignoreEvent;
-    }
-    public boolean isIgnoreEvent() {
-        return ignoreEvent;
+    public EventStatus getEventStatus() {
+        return eventStatus;
     }
     
-    public void setWaitForPrimary(boolean waitForPrimary) {
-        this.waitForPrimary = waitForPrimary;
+    public void setEventState(EventState eventState) {
+        this.eventState = eventState;
     }
-    public boolean isWaitForPrimary() {
-        return waitForPrimary;
+    public EventState getEventState() {
+        return eventState;
     }
     
-    public boolean setFilteredReason(FilterReason filteredReason) {
+    public boolean addFilteredReason(FilterReason filteredReason) {
         return this.filterReasons.add(filteredReason);
     }
     public List<FilterReason> getFilteredReasons() {

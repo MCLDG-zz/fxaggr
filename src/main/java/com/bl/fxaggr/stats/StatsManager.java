@@ -81,8 +81,8 @@ public class StatsManager {
         symbolStat.totalNumberOfEvents++;
         
         //Update the filtered event counters
-		System.out.println("Sequence: " + event.getPriceEntity().getSequence() + ". Stats filtered event?" + event.isFilteredEvent()  + ". Stats ignored event?" + event.isIgnoreEvent()); 
-        if (event.isFilteredEvent()) {
+		System.out.println("Sequence: " + event.getPriceEntity().getSequence() + ". Stats event status: " + event.getEventStatus()); 
+        if (event.getEventStatus() == PriceEvent.EventStatus.FILTERED) {
             overallStats.totalNumberOfFilteredEvents++;
             symbolStat.totalNumberOfFilteredEvents++;
             List <PriceEvent.FilterReason> filteredReasons = event.getFilteredReasons();

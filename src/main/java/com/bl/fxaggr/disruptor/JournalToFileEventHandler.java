@@ -16,7 +16,7 @@ import static java.nio.file.StandardOpenOption.*;
 
 import com.lmax.disruptor.EventHandler;
 
-/*
+/**
  * Persists the event to the file system
  */
 public class JournalToFileEventHandler implements EventHandler<PriceEvent> {

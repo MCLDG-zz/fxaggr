@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import com.lmax.disruptor.EventHandler;
 
@@ -18,9 +20,21 @@ import com.mongodb.client.FindIterable;
 
 import com.google.gson.Gson;
 
+/**
+ * Responsible for filtering price events. Filtering includes the following:
+ * <ul>
+ * <li>Spread too large
+ * <li>Bid/Ask spike
+ * <li>etc.
+ * </ul>
+ * <p>
+ * The key characteristic of filtering is that it considers the current event ONLY.
+ * There is no need to compare the values of another event to determine whether the
+ * current event should be filtered. The current event is considered in isolation and
+ * is filtered by comparing its values to the thresholds in the configuration settings.
+ */
 public class PriceFilterEH implements EventHandler<PriceEvent> {
 	
-	private Map<String, AggrConfigCurrency> aggrcurrencyconfigMap = new HashMap<>();
 	private Map<String, PriceStats> priceStatsMap = new HashMap<>();
 	private Map<String, PreviousPrice> previousPriceMap = new HashMap<>();
 	private Map<String, Long> consecutiveFilteredPriceMap = new HashMap<>();
@@ -29,16 +43,16 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	private Map<String, Long> askSpikeLoCounter = new HashMap<>();
 	private Map<String, Long> bidSpikeLoCounter = new HashMap<>();
 	private String currency = null;
-	private AggrConfig aggrConfig;
-	private AggrConfigCurrency aggrConfigCurrency;
+	private AggrConfig.AggrConfigCurrency aggrConfigCurrency;
 	private PriceStats priceStats;
 	private PreviousPrice previousPrice = null;
 	private PriceEntity priceEntity;
 	private MongoDatabase db = null;
-
 	
 	public PriceFilterEH() {
-		System.out.println("PriceFilterEH created. Object ID:: " + this.toString()); 
+		//Stop the logging to console
+		Logger mongoLogger = Logger.getLogger( "org.mongodb.driver" );
+    	mongoLogger.setLevel(Level.SEVERE); 		
 		MongoClient mongoClient = null;
 		try {
 			mongoClient = new MongoClient();
@@ -49,26 +63,9 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		}
 		
 		db = mongoClient.getDatabase("fxaggr");
-		System.out.println("Connection to Mongo created: " + db.hashCode());
-		
-		//Read the config from the aggrconfig collection in Mongo
-		FindIterable<Document> iterable = db.getCollection("aggrconfig").find();
-	
-	   	iterable.forEach(new Block<Document>() {
-    		@Override
-    		public void apply(final Document document) {
-   				Gson gson = new Gson();
-		   		System.out.println("aggrConfig JSON: " + document.toJson());
-        		aggrConfig = gson.fromJson(document.toJson(), AggrConfig.class);  
-    		}
-		});
-		for( AggrConfigCurrency currencyconfig : aggrConfig.currencyconfig) {
-       		aggrcurrencyconfigMap.put(currencyconfig.symbol, currencyconfig);
-		}
-   		System.out.println("Number of CurrencyConfig items: " + aggrcurrencyconfigMap.size());
 
 		//Read the prices stats from the pricestats collection in Mongo
-		iterable = db.getCollection("pricestats").find();
+		FindIterable<Document> iterable = db.getCollection("pricestats").find();
 	
 	   	iterable.forEach(new Block<Document>() {
     		@Override
@@ -82,6 +79,13 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	}
 
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
+		event.setEventState(PriceEvent.EventState.FILTER_COMPLETED);
+		
+		if (PriceEventHelper.aggrConfig == null) {
+			System.out.println("PriceFilterEH cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
+			event.addAuditEvent("PriceFilterEH. Cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
+			return;
+		}
 		priceEntity = event.getPriceEntity();
 		double spread = priceEntity.getSpread();
 
@@ -89,15 +93,15 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		if (spread < 0) {
 			System.out.println("Sequence: " + sequence + ". Negative spread"); 
 			event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Negative spread. Spread is: " + spread); 
-			event.setFilteredEvent(true);
-			event.setFilteredReason(PriceEvent.FilterReason.NEGATIVE_SPREAD);
+			event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+			event.addFilteredReason(PriceEvent.FilterReason.NEGATIVE_SPREAD);
 			return;
 		}
 		
 		currency = priceEntity.getSymbol();
 		int hour = priceEntity.getDatetime().getHour();
 		priceStats = priceStatsMap.get(currency + hour);
-		aggrConfigCurrency = aggrcurrencyconfigMap.get(currency);
+		aggrConfigCurrency = PriceEventHelper.aggrcurrencyconfigMap.get(currency);
 		previousPrice = previousPriceMap.get(currency);
 
 		//Check if the spread falls within the acceptable range
@@ -109,8 +113,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 			if (spread > Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfigCurrency.pctLeewayAllowedSpread / 100))) {
 				System.out.println("Sequence: " + sequence + ". exceeds average spread"); 
 				event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Exceeds average spread. Spread is: " + spread + ". Expected range: " + Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfigCurrency.pctLeewayAllowedSpread / 100))); 
-				event.setFilteredEvent(true);
-				event.setFilteredReason(PriceEvent.FilterReason.SPREAD_EXCEEDS_AVERAGE);
+				event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+				event.addFilteredReason(PriceEvent.FilterReason.SPREAD_EXCEEDS_AVERAGE);
 			}
 		}
 		
@@ -143,7 +147,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 					else {
 						askSpikeHiCounter.put(currency, new Long(1));
 					}
-					if (askSpikeHiCounter.get(currency) > aggrConfig.globalconfig.numberconsecutivespikesfiltered) {
+					if (askSpikeHiCounter.get(currency) > PriceEventHelper.getNumberConsecutiveSpikesFiltered()) {
 						System.out.println("Sequence: " + sequence + ". Treating ask price spike as new normal."); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating ask price spike as new normal."); 
 						askSpikeHiCounter.replace(currency, new Long(0));
@@ -152,8 +156,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 						System.out.println("Sequence: " + sequence + ". FilterEH Ask Hi spike."); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Ask Hi Spike. Ask exceeds: " + leewayHi); 
 						priceSpike = true;
-						event.setFilteredEvent(true);
-						event.setFilteredReason(PriceEvent.FilterReason.ASK_SPIKE);
+						event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+						event.addFilteredReason(PriceEvent.FilterReason.ASK_SPIKE);
 					}
 				} 
 				if (priceEntity.getAsk() < leewayLo) {
@@ -163,7 +167,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 					else {
 						askSpikeLoCounter.put(currency, new Long(1));
 					}
-					if (askSpikeLoCounter.get(currency) > aggrConfig.globalconfig.numberconsecutivespikesfiltered) {
+					if (askSpikeLoCounter.get(currency) > PriceEventHelper.getNumberConsecutiveSpikesFiltered()) {
 						System.out.println("Sequence: " + sequence + ". Treating ask price spike as new normal."); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating ask price spike as new normal."); 
 						askSpikeLoCounter.replace(currency, new Long(0));
@@ -172,8 +176,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 						System.out.println("Sequence: " + sequence + ". FilterEH Ask Lo spike."); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Ask Lo Spike. Ask below: " + leewayLo); 
 						priceSpike = true;
-						event.setFilteredEvent(true);
-						event.setFilteredReason(PriceEvent.FilterReason.ASK_SPIKE);
+						event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+						event.addFilteredReason(PriceEvent.FilterReason.ASK_SPIKE);
 					}
 				} 
 				/*
@@ -191,7 +195,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 					else {
 						bidSpikeHiCounter.put(currency, new Long(1));
 					}
-					if (bidSpikeHiCounter.get(currency) > aggrConfig.globalconfig.numberconsecutivespikesfiltered) {
+					if (bidSpikeHiCounter.get(currency) > PriceEventHelper.getNumberConsecutiveSpikesFiltered()) {
 						System.out.println("Sequence: " + sequence + ". Treating bid price spike as new normal."); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating bid price spike as new normal."); 
 						bidSpikeHiCounter.replace(currency, new Long(0));
@@ -200,8 +204,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 						System.out.println("Sequence: " + sequence + ". FilterEH Bid Hi spike. Prev price: " + previousPrice.bid); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Bid Hi Spike. Bid exceeds: " + leewayHi); 
 						priceSpike = true;
-						event.setFilteredEvent(true);
-						event.setFilteredReason(PriceEvent.FilterReason.BID_SPIKE);
+						event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+						event.addFilteredReason(PriceEvent.FilterReason.BID_SPIKE);
 					}
 				}
 				if (priceEntity.getBid() < leewayLo) {
@@ -211,7 +215,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 					else {
 						bidSpikeLoCounter.put(currency, new Long(1));
 					}
-					if (bidSpikeLoCounter.get(currency) > aggrConfig.globalconfig.numberconsecutivespikesfiltered) {
+					if (bidSpikeLoCounter.get(currency) > PriceEventHelper.getNumberConsecutiveSpikesFiltered()) {
 						System.out.println("Sequence: " + sequence + ". Treating bid price spike as new normal."); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating bid price spike as new normal."); 
 						bidSpikeLoCounter.replace(currency, new Long(0));
@@ -220,8 +224,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 						System.out.println("Sequence: " + sequence + ". FilterEH Bid Lo spike."); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Bid Lo Spike. Bid below: " + leewayLo); 
 						priceSpike = true;
-						event.setFilteredEvent(true);
-						event.setFilteredReason(PriceEvent.FilterReason.BID_SPIKE);
+						event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+						event.addFilteredReason(PriceEvent.FilterReason.BID_SPIKE);
 					}
 				}
 				//Do not store price spikes. They should be treated as anomalies (faulty) and future
@@ -256,8 +260,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		}
 		
 		//Log the stats
-		System.out.println("Sequence: " + sequence + ". PriceFilterEH filtered event?" + event.isFilteredEvent()); 
-		event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". PriceFilterEH filtered event?" + event.isFilteredEvent()); 
+		System.out.println("Sequence: " + sequence + ". PriceFilterEH event status: " + event.getEventStatus()); 
+		event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". PriceFilterEH event status: " + event.getEventStatus()); 
 
 		if (sequence == PriceEventMain.producerCount) {
 	        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
@@ -277,7 +281,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	private void persistOutliers(String message) {
 		Gson gson = new Gson();
     	String jsonMessage = gson.toJson(message);
-    	String jsonAggrConfig = gson.toJson( (aggrConfig == null) ? new AggrConfig() : aggrConfig );
+    	String jsonAggrConfig = gson.toJson( (PriceEventHelper.aggrConfig == null) ? new AggrConfig() : PriceEventHelper.aggrConfig );
     	String jsonPriceStats = gson.toJson( (priceStats == null) ? new PriceStats() : priceStats );
     	String jsonPreviousPrice = gson.toJson( (previousPrice == null) ? new PreviousPrice() : previousPrice );
     	String jsonPriceEntity = gson.toJson( (priceEntity == null) ? new PriceEntity() : priceEntity );
@@ -303,46 +307,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	 * The inner classes below represent this structure, and are used by GSON
 	 * to convert JSON to Java entity classes
 	 * 
-    "globalconfig": {
-        "numberconsecutivespikesfiltered": 3
-    },
-    "currencyconfig": [{
-        "symbol": "AUDCAD",
-        "pctLeewayAllowedSpread": 10.0,
-        "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 5.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
-    }, {
-        "symbol": "EURNZD",
-        "pctLeewayAllowedSpread": 10.0,
-        "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
-    }]
-})
 	*/
 
-	private class AggrConfig {
-		public globalconfig globalconfig;
-		public AggrConfigCurrency[] currencyconfig;
-	}
-	private class globalconfig {
-		public int numberconsecutivespikesfiltered;
-		public String[] liquidityproviders;
-		public String[] availableschemes;
-		public String primaryliquidityprovider;
-		public String scheme;
-	}
-	private class AggrConfigCurrency {
-		public String symbol;
-		public double pctLeewayAllowedSpread;
-		public double pctLeewayToPreviousBid;
-		public double pctLeewayToPreviousAsk;
-		public double pctAboveMaxSpread;
-		public double pctBelowMinSpread;
-	}
 	private class PriceStats {
 		public PriceID _id;
 		public double averageAsk;

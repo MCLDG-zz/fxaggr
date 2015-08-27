@@ -33,11 +33,22 @@ db.pricestats.insert({
 
 db.aggrconfig.insert({
     "globalconfig": {
-        "numberconsecutivespikesfiltered": 3,
-        "liquidityproviders": ["Deutsche Bank", "Citibank", "Bloomberg"],
-        "primaryliquidityprovider": "Bloomberg",
         "availableschemes": ["Primary Bid/Ask", "Primary Bid/Best Ask", "Best Bid/Primary Ask", "Best Bid/Ask"],
-        "scheme": "Primary Bid/Ask"
+        "scheme": "Primary Bid/Ask",
+        "liquidityproviders": ["Deutsche Bank", "Citibank", "Bloomberg"],
+        "primarybidask": {
+            "primarysecondarytertiaryproviders": ["Deutsche Bank", "Bloomberg", "Citibank"],
+            "timeintervalbeforeswitchingms": 30000
+        },
+        "bestbidask": {
+            "primarysecondarytertiaryproviders": ["Deutsche Bank", "Bloomberg", "Citibank"],
+            "timeintervalformatchingquotesms": 500,
+            "minimummatchingquotesrequired": 3,
+            "timeintervalbeforeswitchingms": 30000
+        },
+        "filteringrules": {
+            "numberconsecutivespikesfiltered": 3
+        }
     },
     "currencyconfig": [{
         "symbol": "USDCAD",
