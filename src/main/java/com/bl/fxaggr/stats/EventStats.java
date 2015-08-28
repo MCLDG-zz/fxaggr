@@ -8,6 +8,9 @@ import com.bl.fxaggr.disruptor.PriceEvent;
 public class EventStats {
     public long totalNumberOfEvents;
     public long totalNumberOfFilteredEvents;
+    public long totalLiquidityProviderSwitches;
+    public long totalLiquidityProviderSwitchBacks;
+    public long totalLiquidityProviderUnableToSwitch;
     public Map <PriceEvent.FilterReason, Long> numberPerFilteredReason = new HashMap <> ();
     public long maxSecondsBetweenQuoteTimeAndProcessedTime;
     public long minSecondsBetweenQuoteTimeAndProcessedTime;

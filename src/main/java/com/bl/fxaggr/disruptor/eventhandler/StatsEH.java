@@ -1,13 +1,16 @@
-package com.bl.fxaggr.disruptor;
+package com.bl.fxaggr.disruptor.eventhandler;
 
-import com.lmax.disruptor.EventHandler;
-
+import com.bl.fxaggr.disruptor.*;
 import com.bl.fxaggr.stats.StatsManager;
 import com.bl.fxaggr.stats.EventStats;
+
+import com.lmax.disruptor.EventHandler;
 
 /**
  * Persists metrics and statistics information to provide visibility into the 
  * working and performance of the price quote engine
+ * 
+ * @see StatsManager
  */
 public class StatsEH implements EventHandler<PriceEvent> {
 	

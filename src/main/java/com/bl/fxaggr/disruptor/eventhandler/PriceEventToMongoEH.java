@@ -1,4 +1,6 @@
-package com.bl.fxaggr.disruptor;
+package com.bl.fxaggr.disruptor.eventhandler;
+
+import com.bl.fxaggr.disruptor.*;
 
 import java.util.logging.Logger;
 import java.util.logging.Level;
@@ -12,8 +14,8 @@ import org.bson.Document;
 
 import com.google.gson.Gson;
 /**
- * Persists the price quote event to Mongo. The current state of the event will
- * determine which collection the price event is written to.
+ * Persists the price quote event to Mongo. The current state of the price event will
+ * determine which collection the price event is written to in Mongo.
  */
 public class PriceEventToMongoEH implements EventHandler<PriceEvent> {
 	MongoDatabase db = null;
@@ -40,8 +42,7 @@ public class PriceEventToMongoEH implements EventHandler<PriceEvent> {
 	 * determine which collection the price event is written to
 	 */
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
-		//Convert the PriceEntity to JSON
-		PriceEntity priceEntity = event.getPriceEntity();
+		//Convert the event to JSON
     	String json = gson.toJson(event);
 
 		//Seems Java is clever enough to infer the type of the enum from the 

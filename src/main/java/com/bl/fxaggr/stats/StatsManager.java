@@ -81,21 +81,16 @@ public class StatsManager {
         symbolStat.totalNumberOfEvents++;
         
         //Update the filtered event counters
-		System.out.println("Sequence: " + event.getPriceEntity().getSequence() + ". Stats event status: " + event.getEventStatus()); 
         if (event.getEventStatus() == PriceEvent.EventStatus.FILTERED) {
             overallStats.totalNumberOfFilteredEvents++;
             symbolStat.totalNumberOfFilteredEvents++;
             List <PriceEvent.FilterReason> filteredReasons = event.getFilteredReasons();
-            System.out.println("Sequence: " + event.getPriceEntity().getSequence() + ". Stats. number of reasons " + filteredReasons.size());
             for (PriceEvent.FilterReason filteredReason: filteredReasons) {
-                    System.out.println("Sequence: " + event.getPriceEntity().getSequence() + "Stats filteredReason: " + filteredReason);
                 if (overallStats.numberPerFilteredReason.containsKey(filteredReason)) {
                     overallStats.numberPerFilteredReason.replace(filteredReason, overallStats.numberPerFilteredReason.get(filteredReason) + 1);
-                        System.out.println("Sequence: " + event.getPriceEntity().getSequence() + "Stats numberPerFilteredReason: " + overallStats.numberPerFilteredReason.get(filteredReason));
                 } 
                 else {
                     overallStats.numberPerFilteredReason.put(filteredReason, new Long(1));
-                        System.out.println("Sequence: " + event.getPriceEntity().getSequence() + "Stats numberPerFilteredReason: " + overallStats.numberPerFilteredReason.get(filteredReason));
                 }
                 if (symbolStat.numberPerFilteredReason.containsKey(filteredReason)) {
                     symbolStat.numberPerFilteredReason.replace(filteredReason, symbolStat.numberPerFilteredReason.get(filteredReason) + 1);
@@ -104,6 +99,19 @@ public class StatsManager {
                     symbolStat.numberPerFilteredReason.put(filteredReason, new Long(1));
                 }
             }
+        }
+        //Update the liqudity provider event counters
+        if (event.getEventLPSwitch() == PriceEvent.EventLPSwitch.SWITCH_NEXT_PRIMARY) {
+            overallStats.totalLiquidityProviderSwitches++;
+            symbolStat.totalLiquidityProviderSwitches++;
+        }
+        if (event.getEventLPSwitch() == PriceEvent.EventLPSwitch.SWITCH_BACK_PREVIOUS_PRIMARY) {
+            overallStats.totalLiquidityProviderSwitchBacks++;
+            symbolStat.totalLiquidityProviderSwitchBacks++;
+        }
+        if (event.getEventLPSwitch() == PriceEvent.EventLPSwitch.UNABLE_TO_SWITCH) {
+            overallStats.totalLiquidityProviderUnableToSwitch++;
+            symbolStat.totalLiquidityProviderUnableToSwitch++;
         }
     }
     private static void persistStats() {

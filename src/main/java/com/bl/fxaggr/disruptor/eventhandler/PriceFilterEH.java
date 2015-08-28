@@ -1,4 +1,6 @@
-package com.bl.fxaggr.disruptor;
+package com.bl.fxaggr.disruptor.eventhandler;
+
+import com.bl.fxaggr.disruptor.*;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -79,6 +81,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	}
 
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
+
 		event.setEventState(PriceEvent.EventState.FILTER_COMPLETED);
 		
 		if (PriceEventHelper.aggrConfig == null) {
@@ -260,7 +263,6 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		}
 		
 		//Log the stats
-		System.out.println("Sequence: " + sequence + ". PriceFilterEH event status: " + event.getEventStatus()); 
 		event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". PriceFilterEH event status: " + event.getEventStatus()); 
 
 		if (sequence == PriceEventMain.producerCount) {

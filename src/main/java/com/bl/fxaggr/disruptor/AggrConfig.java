@@ -19,10 +19,10 @@ public static class globalconfig {
 public static class primarybidask {
     public  String[] primarysecondarytertiaryproviders;
     public  long timeintervalbeforeswitchingms;
+    public  long numberquotesbeforeswitchtoprevious;
+    public  String actionwhennomoreliquidityproviders;
 }
 public static class bestbidask {
-    public  String[] primarysecondarytertiaryproviders;
-    public  long timeintervalbeforeswitchingms;
     public  long timeintervalformatchingquotesms;
     public  long minimummatchingquotesrequired;
 }

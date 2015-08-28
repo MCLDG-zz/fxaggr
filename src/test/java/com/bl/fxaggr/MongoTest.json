@@ -3,6 +3,8 @@ db.priceoutliers.drop()
 db.runtimestats.drop()
 db.pricestats.drop()
 db.aggrconfig.drop()
+db.rawquotes.drop()
+db.finalquotes.drop()
 
 db.pricestats.insert({
     "_id": {
@@ -37,14 +39,14 @@ db.aggrconfig.insert({
         "scheme": "Primary Bid/Ask",
         "liquidityproviders": ["Deutsche Bank", "Citibank", "Bloomberg"],
         "primarybidask": {
-            "primarysecondarytertiaryproviders": ["Deutsche Bank", "Bloomberg", "Citibank"],
-            "timeintervalbeforeswitchingms": 30000
+            "primarysecondarytertiaryproviders": ["Bloomberg", "Deutsche Bank", "Citibank"],
+            "timeintervalbeforeswitchingms": 5000,
+            "numberquotesbeforeswitchtoprevious": 3,
+            "actionwhennomoreliquidityproviders": "Stay with current provider"
         },
         "bestbidask": {
-            "primarysecondarytertiaryproviders": ["Deutsche Bank", "Bloomberg", "Citibank"],
             "timeintervalformatchingquotesms": 500,
-            "minimummatchingquotesrequired": 3,
-            "timeintervalbeforeswitchingms": 30000
+            "minimummatchingquotesrequired": 3
         },
         "filteringrules": {
             "numberconsecutivespikesfiltered": 3

@@ -1,0 +1,28 @@
+20141102 170018643,1.000000,1.100000,Bloomberg,USDCAD,"ACCEPTED SEQ 0 - base price for primary provider"
+20141102 170018644,1.000000,1.100000,Bloomberg,USDCAD,"ACCEPTED SEQ 1 - next price for primary provider"
+20141102 170018645,1.000000,1.100000,Deutsche Bank,USDCAD,"IGNORED SEQ 2 - not primary provider"
+wait 6000, "this exceeds the waiting period so switch liquidity provider
+20141102 170018649,1.000000,1.100000,Deutsche Bank,USDCAD,"ACCEPTED SEQ 3 - primary provider changed to DB so this is accepted"
+20141102 170018660,1.000000,1.100000,Bloomberg,USDCAD,"IGNORED SEQ 4 - no longer primary provider"
+20141102 170018661,1.000000,1.100000,Bloomberg,USDCAD,"IGNORED SEQ 5 - no longer primary provider"
+20141102 170018662,1.000000,1.100000,Bloomberg,USDCAD,"IGNORED SEQ 6 - no longer primary provider"
+20141102 170018663,1.000000,1.100000,Bloomberg,USDCAD,"ACCEPTED SEQ 7 - since Bloomberg was previous primary, we switch back after 3 quotes"
+wait 6000, "this exceeds the waiting period so switch liquidity provider
+20141102 170018670,1.000000,1.100000,Deutsche Bank,USDCAD,"ACCEPTED SEQ 8 - primary provider changed to DB so this is accepted"
+20141102 170018671,1.000000,1.100000,Bloomberg,USDCAD,"IGNORED SEQ 9 - no longer primary provider"
+20141102 170018672,1.000000,1.100000,Citibank,USDCAD,"IGNORED SEQ 10 - not primary provider"
+20141102 170018673,1.000000,1.100000,Deutsche Bank,USDCAD,"ACCEPTED SEQ 11 - primary provider changed to DB so this is accepted"
+wait 6000, "this exceeds the waiting period so switch liquidity provider
+20141102 170018680,1.000000,1.100000,Citibank,USDCAD,"ACCEPTED SEQ 12 - primary provider changed to Citibank so this is accepted"
+20141102 170018681,1.000000,1.100000,Bloomberg,USDCAD,"IGNORED SEQ 13 - no longer primary provider"
+20141102 170018682,1.000000,1.100000,Deutsche Bank,USDCAD,"IGNORED SEQ 14 - not primary provider"
+20141102 170018683,1.000000,1.100000,Citibank,USDCAD,"ACCEPTED SEQ 15 - primary provider changed to Citibank so this is accepted"
+wait 6000, "this exceeds the waiting period so switch liquidity provider when receiving the next quote
+20141102 170018690,1.000000,1.100000,Citibank,USDCAD,"ACCEPTED SEQ 16 - this is current primary provider so primary is NOT and quote is accepted. Do not change LP if the next quote is from primary, even if the time interval is larger than expected"
+20141102 170018691,1.000000,1.100000,Bloomberg,USDCAD,"IGNORED SEQ 17 - no longer primary provider"
+20141102 170018692,1.000000,1.100000,Deutsche Bank,USDCAD,"IGNORED SEQ 18 - not primary provider"
+20141102 170018693,1.000000,1.100000,Citibank,USDCAD,"ACCEPTED SEQ 19 - still primary provider so this is accepted"
+wait 6000, "this exceeds the waiting period so switch liquidity provider when receiving the next quote
+20141102 170018700,1.000000,1.100000,Bloomberg,USDCAD,"IGNORED SEQ 20 - this is NOT the current primary provider so switch providers. FAILS because no more LPs"
+20141102 170018701,1.000000,1.100000,Deutsche Bank,USDCAD,"IGNORED SEQ 21 - not primary provider"
+20141102 170018702,1.000000,1.100000,Citibank,USDCAD,"ACCEPTED SEQ 22 - still primary provider so this is accepted"

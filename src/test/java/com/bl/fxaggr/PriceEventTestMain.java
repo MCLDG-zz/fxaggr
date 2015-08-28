@@ -1,6 +1,7 @@
 package com.bl.fxaggr;
 
 import com.bl.fxaggr.disruptor.*;
+import com.bl.fxaggr.disruptor.eventhandler.*;
 
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
@@ -58,11 +59,30 @@ public class PriceEventTestMain extends Thread {
         EventHandler < PriceEvent > eh20 = new PriceEventToMongoEH();
         EventHandler < PriceEvent > eh21 = new PriceToConsumerEH();
 
+        /******************************************************************************************
+         * BIG WARNING
+         * 
+         * when configuring events to execute concurrently, using <code>handleEventsWith(eh1,eh2)</code>
+         * each event handler will receive a reference to the same event instance. Therefore you CANNOT
+         * mutate / modify the event state. For instance, if you modify the state of the event in eh1,
+         * then at some point while eh2 is processing the same event, the state that eh2 sees will change.
+         *
+         * So when handling an event concurrently make sure the event handlers DO NOT mutate the
+         * event instance. All mutations should be done on events that are handled independently,
+         * not currently. I.e. using <code>handleEventsWith(eh1)</code>
+         * 
+         * For example, it is OK to replicate an event and persist an event concurrently (using
+         * <code>handleEventsWith(replicateEH, persistEH)</code>) since neither of these event 
+         * handlers mutate the state. However, <code>handleEventsWith(updateEH, persistEH)</code>
+         * would not work since updateEH is updating the state while persistEH is attempting to store
+         * 
+         *******************************************************************************************/
+        
         // Connect the handler
         // TODO - I'm sure we can do this more efficiently. For instance, PriceEventToMongoEH
         // does not have to complete before PriceFilterEH starts. We sort of want a copy of 
         // the event to be persisted to Mongo asynchronously while we start on the filtering.
-        disruptor.handleEventsWith(eh3,eh20).then(eh6).then(eh5, eh20, eh21);
+        disruptor.handleEventsWith(eh20).then(eh3).then(eh6).then(eh21).then(eh5,eh20);
 
         // Start the Disruptor, starts all threads running
         disruptor.start();
@@ -70,25 +90,48 @@ public class PriceEventTestMain extends Thread {
         // Get the ring buffer from the Disruptor to be used for publishing.
         ringBuffer = disruptor.getRingBuffer();
 
-        // Start the data generator
+        /**********************************************************************************
+        * Execute the test set. These test price filtering
+        **********************************************************************************/
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
         Date dateStart = new Date();
-        System.out.println("Data producer started at: " + dateFormat.format(dateStart));
+        System.out.println("Data producer started processing TestFilter at: " + dateFormat.format(dateStart));
 
-        PriceEventTestGenerator priceEventGenerator = new PriceEventTestGenerator(ringBuffer);
+        PriceEventTestGenerator priceEventGenerator = new PriceEventTestGenerator(ringBuffer,
+            "/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestFilter.csv");
         priceEventGenerator.run();
 
         Date dateEnd = new Date();
-        System.out.println("Data producer completed at: " + dateFormat.format(dateEnd));
+        System.out.println("Data producer completed processing TestFilter at: " + dateFormat.format(dateEnd));
 
         //Check test results
         Thread.sleep(5000);
-        checkTestResults();
+        checkTestResults("/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestFilterExpectedResults.json");
+        Thread.sleep(2000);
+
+        /**********************************************************************************
+        * Execute the test set. These test Liquidity Provider switching
+        **********************************************************************************/
+        dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+        dateStart = new Date();
+        System.out.println("Data producer started processing TestSwitchLP at: " + dateFormat.format(dateStart));
+
+        priceEventGenerator = new PriceEventTestGenerator(ringBuffer,
+            "/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestSwitchLP.csv");
+        priceEventGenerator.run();
+
+        dateEnd = new Date();
+        System.out.println("Data producer completed processing TestSwitchLP at: " + dateFormat.format(dateEnd));
+
+        //Check test results
+        Thread.sleep(5000);
+        checkTestResults("/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestSwitchLPExpectedResults.json");
+        Thread.sleep(2000);
     }
     /**
      * Check the test results
      */
-    private static boolean checkTestResults() {
+    private static boolean checkTestResults(String resultsFilename) {
         MongoClient mongoClient = null;
     	MongoDatabase db = null;
 
@@ -103,7 +146,7 @@ public class PriceEventTestMain extends Thread {
 
         //Loop through each line in Expected Results; check against the runtimestats collection in Mongo.
         //They should be identical
-        File testfile = new File("/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/ExpectedTestResults.json");
+        File testfile = new File(resultsFilename);
         try {
             System.out.println("Test data result checker opening input file " + testfile.toString());
 

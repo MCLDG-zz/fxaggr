@@ -1,6 +1,7 @@
 package com.bl.fxaggr.disruptor;
 
 import com.bl.fxaggr.generator.PriceEventGenerator;
+import com.bl.fxaggr.disruptor.eventhandler.*;
 
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
@@ -38,12 +39,10 @@ public class PriceEventMain extends Thread {
             new com.lmax.disruptor.BlockingWaitStrategy());
 
         EventHandler < PriceEvent > eh1 = new JournalToFileEventHandler();
-        EventHandler < PriceEvent > eh2 = new JournalToMongoEventHandler();
         EventHandler < PriceEvent > eh3 = new PriceFilterEH();
-        EventHandler < PriceEvent > eh4 = new PriceParserEventHandler();
 
         // Connect the handler
-        disruptor.handleEventsWith(eh3).then(eh4).then(eh2);
+        disruptor.handleEventsWith(eh3);
 
         // Start the Disruptor, starts all threads running
         disruptor.start();

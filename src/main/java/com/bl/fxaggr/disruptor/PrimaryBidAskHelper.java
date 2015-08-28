@@ -8,6 +8,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 /**
+ * NOT USED ANYMORE - SHOULD BE POSSIBLE TO REMOVE THIS CLASS
+ * 
  * A helper class for the Primary Bid/Ask strategy. Instead of PrimaryBidAskEH waiting for
  * a matching quote from a primary liquidity provider, this class allows PrimaryBidAskEH to
  * store those price quotes that must wait for a matching primary quote.

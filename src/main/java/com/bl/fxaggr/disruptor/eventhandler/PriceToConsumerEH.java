@@ -1,9 +1,11 @@
-package com.bl.fxaggr.disruptor;
+package com.bl.fxaggr.disruptor.eventhandler;
+
+import com.bl.fxaggr.disruptor.*;
 
 import com.lmax.disruptor.EventHandler;
 
 /**
- * Sends quote to consumer
+ * Sends the final quote to consumer
  */
 public class PriceToConsumerEH implements EventHandler<PriceEvent> {
 
@@ -16,6 +18,5 @@ public class PriceToConsumerEH implements EventHandler<PriceEvent> {
 		if (event.getEventStatus() != PriceEvent.EventStatus.VALID) {
 			return;
 		}
-		System.out.println("Sequence: " + sequence + " sent to consumer. QuoteToConsumerEH"); 
 	}
 }

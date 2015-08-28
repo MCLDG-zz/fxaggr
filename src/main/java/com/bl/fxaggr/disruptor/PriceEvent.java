@@ -12,11 +12,16 @@ import java.util.ArrayList;
  * will be recycled by the RingBuffer. You must take a copy of data it holds
  * before the framework recycles it.
  * 
+ * TODO At some point we'll need test cases to test whether the engine still
+ * continues to operate correctly once it starts reusing PriceEvents
+ * 
  */
 public class PriceEvent {
     private PriceEntity priceEntity;
     private EventStatus eventStatus = EventStatus.VALID;
     private EventState eventState = EventState.NEW_QUOTE;
+    private EventLPSwitch eventLPSwitch = null;  //holds type of LP switch if a switch hapened while processing this event
+    private String primaryLPWhenHandlingThisEvent = null;  //holds the primary LP when this event was handled
     private List<FilterReason> filterReasons = new ArrayList<>();
     private List<String> eventAuditTrail = new ArrayList<>();
     
@@ -40,6 +45,12 @@ public class PriceEvent {
 		FINAL_QUOTE
 	}
     
+    public enum EventLPSwitch {
+		SWITCH_NEXT_PRIMARY,
+		SWITCH_BACK_PREVIOUS_PRIMARY,
+		UNABLE_TO_SWITCH
+	}
+    
     public void setPriceEntity(PriceEntity priceEntity) {
         this.priceEntity = priceEntity;
     }
@@ -59,6 +70,13 @@ public class PriceEvent {
     }
     public EventState getEventState() {
         return eventState;
+    }
+    
+    public void setEventLPSwitch(EventLPSwitch eventLPSwitch) {
+        this.eventLPSwitch = eventLPSwitch;
+    }
+    public EventLPSwitch getEventLPSwitch() {
+        return eventLPSwitch;
     }
     
     public boolean addFilteredReason(FilterReason filteredReason) {
