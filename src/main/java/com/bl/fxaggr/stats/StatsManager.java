@@ -114,6 +114,10 @@ public class StatsManager {
             symbolStat.totalLiquidityProviderUnableToSwitch++;
         }
     }
+    public static void resetStats() {
+        symbolStats = new HashMap <String, EventStats> ();
+        overallStats = new EventStats();
+    }
     private static void persistStats() {
     	//Convert the stats to JSON and write to DB
 		Gson gson = new Gson();

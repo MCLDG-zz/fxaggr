@@ -28,7 +28,12 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 	private PriceEntity priceEntity;
 
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
+		//Store the latest price quote
+		priceEntity = event.getPriceEntity();
+		PriceEventHelper.storeLatestPriceQuote(priceEntity);
 		event.setEventState(PriceEvent.EventState.COMPARISON_COMPLETED);
+		
+		//Ensure we have a valid config
 		if (PriceEventHelper.aggrConfig == null) {
 			System.out.println("PrimaryBidAskEH cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
 			event.addAuditEvent("PrimaryBidAskEH. Cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
@@ -39,8 +44,16 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 			return;
 		}
 
-		priceEntity = event.getPriceEntity();
-
+		/**
+		 * TODO
+		 * 
+		 * Handle the case where best bid/ask is not able to create a best price.
+		 * In this case, revert to the primary bid/ask
+		 * 
+		 */
+		 
+		//Now process the event based on the current price selection scheme as 
+		//defined in the config
 		switch(PriceEventHelper.getPriceSelectionScheme()) {
 			case "Primary Bid/Ask": 
 				if (!this.handlePrimaryBidAskScheme(event)) {
@@ -53,6 +66,10 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 			case "Best Bid/Primary Ask": 
 				break;
 			case "Best Bid/Ask": 
+				if (!this.handleBestBidAskScheme(event)) {
+					event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+					event.addFilteredReason(PriceEvent.FilterReason.NO_BEST_BIDASK_NOT_PRIMARY);
+				}
 				break;
 		}
 
@@ -74,6 +91,9 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 	 * 			liquidity provider
 	 */
 	private boolean handlePrimaryBidAskScheme(PriceEvent event) {
+
+		event.setAppliedSelectionScheme(PriceEvent.AppliedSelectionScheme.PRIMARY_BID_ASK);
+		
 		//If this price count is from the previous primary liquidity provider, increment
 		//the counter and check against the config. If it exceeds the config we will
 		//switch back to the previous primary provider
@@ -113,6 +133,7 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 				//for the entire feed or only for a symbol. Here I'm keep the last time
 				//of a quote for the entire feed - not per symbol
 				PriceEventHelper.notePrimaryPriceQuote();
+				event.setAppliedSelectionScheme(PriceEvent.AppliedSelectionScheme.PRIMARY_BID_ASK);
 				return true;
 			}
 			else {
@@ -149,5 +170,46 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * Handle this price event based on the Best Bid/Ask scheme. In this scheme
+	 * the best bid/ask based on the price quotes available at this moment in time
+	 * is created and fed through to consumers.
+	 * 
+	 * <p>
+	 * For a best bid/ask to be created there must be a current quote from a
+	 * quorum of liquidity providers. A 'quorum' is defined as the minimum number
+	 * of liquidity provider who have provided us with a current quote. Usually,
+	 * a minimum of at least 3 quotes must exist for a symbol, each from unique
+	 * liqudity providers, and each provided within the past 'n' seconds. The number
+	 * of quotes required and the interval within which they must be provided are 
+	 * defined in the config under the section 'globalconfig.bestbidask'.
+	 * 
+	 * @return	A boolean indicating whether a best bid-ask price quote could be
+	 * 			created and may therefore be sent to the consumer
+     *  		<code>true</code> a best bid-ask price quote could be
+	 * 			created and may therefore be sent to the consumer
+	 * 			<code>false</code> a best bid-ask price quote could not be
+	 * 			created and may therefore not be sent to the consumer
+	 */
+	private boolean handleBestBidAskScheme(PriceEvent event) {
+		String symbol = priceEntity.getSymbol();
+		double bestBid = 0;
+		double bestAsk = 0;
+		
+		event.setAppliedSelectionScheme(PriceEvent.AppliedSelectionScheme.BEST_BID_ASK);
+		/*
+		* Get the best bid/ask combination
+		*/
+		Map<String, PriceEntity> bestBidAsk = PriceEventHelper.getBestBidAskForSymbol(symbol);
+		if (bestBidAsk == null) {
+			return false;
+		}
+		
+		//Assume a best bid/ask has been created
+		event.setBestBidAsk(bestBidAsk);
+		System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - Best Bid/Ask created"); 
+		return true;
 	}
 }

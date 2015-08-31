@@ -2,6 +2,8 @@ package com.bl.fxaggr.disruptor;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * You would think that by now the Java working group would have fixed
@@ -20,17 +22,20 @@ public class PriceEvent {
     private PriceEntity priceEntity;
     private EventStatus eventStatus = EventStatus.VALID;
     private EventState eventState = EventState.NEW_QUOTE;
+    private AppliedSelectionScheme appliedSelectionScheme = AppliedSelectionScheme.NONE;
     private EventLPSwitch eventLPSwitch = null;  //holds type of LP switch if a switch hapened while processing this event
     private String primaryLPWhenHandlingThisEvent = null;  //holds the primary LP when this event was handled
     private List<FilterReason> filterReasons = new ArrayList<>();
     private List<String> eventAuditTrail = new ArrayList<>();
+    private Map<String, PriceEntity> bestBidAsk = null;
     
     public enum FilterReason {
 		NEGATIVE_SPREAD,
 		SPREAD_EXCEEDS_AVERAGE,
 		ASK_SPIKE,
 		BID_SPIKE,
-		NOT_PRIMARY
+		NOT_PRIMARY,
+		NO_BEST_BIDASK_NOT_PRIMARY
 	}
     
     public enum EventStatus {
@@ -49,6 +54,12 @@ public class PriceEvent {
 		SWITCH_NEXT_PRIMARY,
 		SWITCH_BACK_PREVIOUS_PRIMARY,
 		UNABLE_TO_SWITCH
+	}
+    
+    public enum AppliedSelectionScheme {
+        NONE,
+		PRIMARY_BID_ASK,
+		BEST_BID_ASK
 	}
     
     public void setPriceEntity(PriceEntity priceEntity) {
@@ -79,6 +90,13 @@ public class PriceEvent {
         return eventLPSwitch;
     }
     
+    public void setAppliedSelectionScheme(AppliedSelectionScheme appliedSelectionScheme) {
+        this.appliedSelectionScheme = appliedSelectionScheme;
+    }
+    public AppliedSelectionScheme getAppliedSelectionScheme() {
+        return appliedSelectionScheme;
+    }
+    
     public boolean addFilteredReason(FilterReason filteredReason) {
         return this.filterReasons.add(filteredReason);
     }
@@ -92,5 +110,13 @@ public class PriceEvent {
     public List<String> getEventAuditTrail() {
         return eventAuditTrail;
     }
+    
+    public void setBestBidAsk(Map<String, PriceEntity> bestBidAsk) {
+        this.bestBidAsk = bestBidAsk;
+    }
+    public Map<String, PriceEntity> getBestBidAsk() {
+        return bestBidAsk;
+    }
+    
     
 }

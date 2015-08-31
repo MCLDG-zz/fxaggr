@@ -5,6 +5,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Stack;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 import java.util.EmptyStackException;
@@ -16,13 +18,15 @@ import com.mongodb.MongoClient;
 import com.mongodb.util.JSON;
 import org.bson.Document;
 import com.mongodb.Block;
-import com.mongodb.client.FindIterable;
+import com.mongodb.client.FindIterable; 
 
 import com.google.gson.Gson;
 
 /**
  * This class is a helper class of static variables and methods used by the
  * price aggregation engine
+ * 
+ * TODO refactor the AggrConfig into it's own helper class
  */
 public class PriceEventHelper {
     
@@ -36,8 +40,11 @@ public class PriceEventHelper {
 	private static String currentPrimaryLiquidityProvider = null;
 	private static String[] currentLiquidityProviders = null;
 	private static long numberconsecutivespikesfiltered;
+	private static long timeintervalformatchingquotesms;
+	private static long minimummatchingquotesrequired;
 	
-	//the following variables contain runtime data
+	//the following variables contain runtime data specifically for the 
+	//Primary Bid-Ask scheme
 	private static Instant timeOfLastPrimaryPrice = null;
 	//after a provider switch, if we start to receive quotes from the previous
 	//primary provider we can consider switching back to the old primary
@@ -45,6 +52,10 @@ public class PriceEventHelper {
 	private static Stack<String> previousPrimaryLiquidityProviders = new Stack<>();
 	private static String previousPrimaryLiquidityProvider = null;
 	private static boolean isPreviousPrimaryLiquidityProvider = false;
+
+	//the following variables contain runtime data specifically for the 
+	//Best Bid-Ask scheme
+	private static Map<String, PriceEntity> latestPriceQuotes = new HashMap<>();
 	
 	static {
 		//Stop the logging to console
@@ -76,6 +87,8 @@ public class PriceEventHelper {
 		currentLiquidityProviders = aggrConfig.globalconfig.primarybidask.primarysecondarytertiaryproviders;
 		currentPrimaryLiquidityProvider = aggrConfig.globalconfig.primarybidask.primarysecondarytertiaryproviders[0];
 		numberconsecutivespikesfiltered = aggrConfig.globalconfig.filteringrules.numberconsecutivespikesfiltered;
+		timeintervalformatchingquotesms = aggrConfig.globalconfig.bestbidask.timeintervalformatchingquotesms;
+		minimummatchingquotesrequired = aggrConfig.globalconfig.bestbidask.minimummatchingquotesrequired;
 		priceSelectionScheme = aggrConfig.globalconfig.scheme;
    		System.out.println("PriceEventHelper Pricing scheme: " + priceSelectionScheme);
    		System.out.println("PriceEventHelper Primary Liquidity Provider: " + currentPrimaryLiquidityProvider);
@@ -92,8 +105,10 @@ public class PriceEventHelper {
 	    return (intervalMS > aggrConfig.globalconfig.primarybidask.timeintervalbeforeswitchingms);
 	}
 	public static boolean isRequiredNumberPreviousPrimaryQuotesReceived() {
-		System.out.println("PriceEventHelper - isRequiredNumberPreviousPrimaryQuotesReceived: " + numberPreviousPrimaryQuotesSinceLastProviderSwitch + " config: " + aggrConfig.globalconfig.primarybidask.numberquotesbeforeswitchtoprevious); 
 	    return (numberPreviousPrimaryQuotesSinceLastProviderSwitch > aggrConfig.globalconfig.primarybidask.numberquotesbeforeswitchtoprevious);
+	}
+	public static void setLiquidityProviders(String[] lps) {
+	    currentLiquidityProviders = lps;
 	}
 	public static void setCurrentPrimaryLiquidityProvider(String lp) {
 	    currentPrimaryLiquidityProvider = lp;
@@ -108,11 +123,13 @@ public class PriceEventHelper {
 	    return isPreviousPrimaryLiquidityProvider;
 	}
 	public static long incrementPriceCounterForPreviousPrimaryProvider() {
-		System.out.println("PriceEventHelper - number quotes for previous providers: " + numberPreviousPrimaryQuotesSinceLastProviderSwitch); 
 	    return numberPreviousPrimaryQuotesSinceLastProviderSwitch++;
 	}
 	public static String getPriceSelectionScheme() {
 	    return priceSelectionScheme;
+	}
+	public static void setPriceSelectionScheme(String scheme) {
+	    priceSelectionScheme = scheme;
 	}
 	public static long getNumberConsecutiveSpikesFiltered() {
 	    return numberconsecutivespikesfiltered;
@@ -207,5 +224,80 @@ public class PriceEventHelper {
        		isPreviousPrimaryLiquidityProvider = false;
 		}
 	    return successfulSwitch;
+	}
+	/**
+	 * Get the latest price quotes that match the current symbol
+	 * 
+	 * @return	
+     *  		<code>Map containing two PriceEntity objects. The first PriceEntity 
+     * 			object is keyed 'BestBid' and contains the PriceEntity that provided
+     * 			the best bid price. The second PriceEntity 
+     * 			object is keyed 'BestAsk' and contains the PriceEntity that provided
+     * 			the best ask price. These are only returned IF each quote is within
+     * 			the time threshold configured in 'bestbidask.timeintervalformatchingquotesms' 
+     * 			and the number of liquidity providers providing quotes is at least
+     * 			equal to 'bestbidask.minimummatchingquotesrequired'
+	 * 			<code>null</code> where the above conditions are not met
+	 */
+	public static Map<String, PriceEntity> getBestBidAskForSymbol(String symbol) {
+		double bestBid = 0;
+		double bestAsk = Double.MAX_VALUE;
+		int numValidQuotes = 0;
+		Map<String, PriceEntity> bestBidAsk = new HashMap<>();
+		List<PriceEntity> priceQuotes = new ArrayList<>();
+		
+		for (int i = 0; i < currentLiquidityProviders.length; i++) {
+			PriceEntity pe = latestPriceQuotes.get(currentLiquidityProviders[i] + symbol);
+			if (pe != null) {
+				//check the timestamp, which must be within the bounds defined in
+				//the config, in 'bestbidask.timeintervalformatchingquotesms'
+				long msBetween = pe.getProcessedTimestamp().until(Instant.now(), ChronoUnit.MILLIS);
+				if (msBetween <= timeintervalformatchingquotesms) {
+					priceQuotes.add(pe);
+					numValidQuotes++;
+					//update the best bid/ask
+					if (pe.getBid() > bestBid) {
+						bestBid = pe.getBid();
+						bestBidAsk.put("BestBid", pe);
+					}
+					if (pe.getAsk() < bestAsk) {
+						bestAsk = pe.getAsk();
+						bestBidAsk.put("BestAsk", pe);
+					}
+				}
+			}
+		}
+		//check the number of valid quotes, which must be at least equal to value specified in
+		//the config, in 'bestbidask.minimummatchingquotesrequired'
+		if (numValidQuotes >= minimummatchingquotesrequired) {
+			return bestBidAsk;
+		}
+		else {
+			return null;
+		}
+	}
+	/**
+	 * Take a copy of the Price Entity and store so we can track the 
+	 * latest pricess for each liquidity provider and symbol
+	 */
+	public static void storeLatestPriceQuote(PriceEntity pe) {
+	
+        PriceEntity priceEntity = new PriceEntity();
+        priceEntity.setSequence(pe.getSequence());
+        priceEntity.setBid(pe.getBid());
+        priceEntity.setAsk(pe.getAsk());
+        priceEntity.setSpread(pe.getSpread());
+        priceEntity.setOpen(pe.getOpen());
+        priceEntity.setClose(pe.getClose());
+        priceEntity.setSymbol(pe.getSymbol());
+        priceEntity.setLiquidityProvider(pe.getLiquidityProvider());
+        priceEntity.setDatetime(pe.getDatetime());
+        priceEntity.setProcessedTimestamp(Instant.now());
+        
+        //Store the price entity in the tracking Map
+        //The key to the Map is made up of liquidity provider plus symbol, 
+        //for example: 
+        //		BloombergUSDCAD
+        latestPriceQuotes.put(pe.getLiquidityProvider() + pe.getSymbol(), priceEntity);
 	}
 }

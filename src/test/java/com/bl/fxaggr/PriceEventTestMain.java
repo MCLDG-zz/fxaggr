@@ -2,6 +2,7 @@ package com.bl.fxaggr;
 
 import com.bl.fxaggr.disruptor.*;
 import com.bl.fxaggr.disruptor.eventhandler.*;
+import com.bl.fxaggr.stats.StatsManager;
 
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
@@ -33,6 +34,9 @@ import com.mongodb.client.FindIterable;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonElement;
 
+/**
+ * Test framework for the FX Aggregation Engine
+ */
 public class PriceEventTestMain extends Thread {
     public static long producerCount = 99998;
     public static RingBuffer < PriceEvent > ringBuffer;
@@ -97,6 +101,7 @@ public class PriceEventTestMain extends Thread {
         Date dateStart = new Date();
         System.out.println("Data producer started processing TestFilter at: " + dateFormat.format(dateStart));
 
+        clearRuntimeResults();
         PriceEventTestGenerator priceEventGenerator = new PriceEventTestGenerator(ringBuffer,
             "/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestFilter.csv");
         priceEventGenerator.run();
@@ -116,6 +121,8 @@ public class PriceEventTestMain extends Thread {
         dateStart = new Date();
         System.out.println("Data producer started processing TestSwitchLP at: " + dateFormat.format(dateStart));
 
+        StatsManager.resetStats();
+        clearRuntimeResults();
         priceEventGenerator = new PriceEventTestGenerator(ringBuffer,
             "/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestSwitchLP.csv");
         priceEventGenerator.run();
@@ -126,6 +133,34 @@ public class PriceEventTestMain extends Thread {
         //Check test results
         Thread.sleep(5000);
         checkTestResults("/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestSwitchLPExpectedResults.json");
+        Thread.sleep(2000);
+
+        /**********************************************************************************
+        * Execute the test set. These test the Best Bid/Ask Scheme
+        **********************************************************************************/
+        dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+        dateStart = new Date();
+        System.out.println("Data producer started processing Best Bid/Ask at: " + dateFormat.format(dateStart));
+
+        //Setup the config in PriceEventHelper
+        String[] lps = {"Bloomberg", "Deutsche Bank", "Citibank"};
+        PriceEventHelper.setCurrentPrimaryLiquidityProvider("Bloomberg");
+        PriceEventHelper.setLiquidityProviders(lps);
+        PriceEventHelper.setPriceSelectionScheme("Best Bid/Ask");
+        System.out.println("Pricing scheme updated to: " + PriceEventHelper.getPriceSelectionScheme() + ". Primary Provider is: " + PriceEventHelper.getCurrentPrimaryLiquidityProvider());
+
+        StatsManager.resetStats();
+        clearRuntimeResults();
+        priceEventGenerator = new PriceEventTestGenerator(ringBuffer,
+            "/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestBestBidAsk.csv");
+        priceEventGenerator.run();
+
+        dateEnd = new Date();
+        System.out.println("Data producer completed processing BestBidAsk at: " + dateFormat.format(dateEnd));
+
+        //Check test results
+        Thread.sleep(5000);
+        checkTestResults("/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/BestBidAskExpectedResults.json");
         Thread.sleep(2000);
     }
     /**
@@ -185,5 +220,26 @@ public class PriceEventTestMain extends Thread {
         }
         System.out.println("Test data result checker - all expected results are correct!!");
         return true;
+    }
+    /**
+     * Each test step above will write results to the 'runtimestats' collection in Mongo,
+     * then compare that against the expected results. So clear 'runtimestats' prior
+     * to executing a test step.
+     */
+    private static void clearRuntimeResults() {
+        MongoClient mongoClient = null;
+    	MongoDatabase db = null;
+
+        try {
+            mongoClient = new MongoClient();
+        }
+        catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        db = mongoClient.getDatabase("fxaggr");
+
+        //Delete the runtimestats from Mongo
+        db.getCollection("runtimestats").drop();
     }
 }
