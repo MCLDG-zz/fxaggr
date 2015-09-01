@@ -1,0 +1,43 @@
+db.pricestats.drop()
+
+db.rawquotes.aggregate(
+    [{
+        $group: {
+            _id: {
+                symbol: "$rawpricequote.priceEntity.symbol",
+                hour: "$rawpricequote.priceEntity.datetime.time.hour"
+            },
+            totalAsk: {
+                $sum: {
+                    $multiply: ["$rawpricequote.priceEntity.bid", "$rawpricequote.priceEntity.ask"]
+                }
+            },
+            averageAsk: {
+                $avg: "$rawpricequote.priceEntity.ask"
+            },
+            averageBid: {
+                $avg: "$rawpricequote.priceEntity.bid"
+            },
+            averageSpread: {
+                $avg: {
+                    $subtract: ["$rawpricequote.priceEntity.ask", "$rawpricequote.priceEntity.bid"]
+                }
+            },
+            maxSpread: {
+                $max: {
+                    $subtract: ["$rawpricequote.priceEntity.ask", "$rawpricequote.priceEntity.bid"]
+                }
+            },
+            minSpread: {
+                $min: {
+                    $subtract: ["$rawpricequote.priceEntity.ask", "$rawpricequote.priceEntity.bid"]
+                }
+            },
+            count: {
+                $sum: 1
+            }
+        }
+    }, {
+        $out: "pricestats"
+    }]
+)

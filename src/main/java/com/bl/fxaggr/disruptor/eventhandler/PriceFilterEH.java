@@ -109,12 +109,10 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 
 		//Check if the spread falls within the acceptable range
 		if (priceStats == null || aggrConfigCurrency == null) {
-			System.out.println("PriceFilterEH cannot analyse pricing. No price stats in table pricestats, or no config in table aggrconfig. Currency: " + currency + " hour: " + hour + ". Sequence: " + sequence); 
 			event.addAuditEvent("PriceFilterEH. Cannot analyse pricing. No price stats in table pricestats, or no config in table aggrconfig. Currency: " + currency + " hour: " + hour + ". Sequence: " + sequence); 
 		}
 		else {
 			if (spread > Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfigCurrency.pctLeewayAllowedSpread / 100))) {
-				System.out.println("Sequence: " + sequence + ". exceeds average spread"); 
 				event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Exceeds average spread. Spread is: " + spread + ". Expected range: " + Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfigCurrency.pctLeewayAllowedSpread / 100))); 
 				event.setEventStatus(PriceEvent.EventStatus.FILTERED);
 				event.addFilteredReason(PriceEvent.FilterReason.SPREAD_EXCEEDS_AVERAGE);

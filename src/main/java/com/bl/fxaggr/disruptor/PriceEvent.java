@@ -28,7 +28,24 @@ public class PriceEvent {
     private List<FilterReason> filterReasons = new ArrayList<>();
     private List<String> eventAuditTrail = new ArrayList<>();
     private Map<String, PriceEntity> bestBidAsk = null;
+    public long recordNum = 0;
     
+    /**
+     * Events are reused by the disruptor. A reused event will still hold the state
+     * set during processing by the previous event handlers. This must be reset
+     * when the event is reused on the ring buffer
+     */
+    public void resetEvent() {
+        this.eventStatus = EventStatus.VALID;
+        this.eventState = EventState.NEW_QUOTE;
+        this.appliedSelectionScheme = AppliedSelectionScheme.NONE;
+        this.eventLPSwitch = null;  
+        this.primaryLPWhenHandlingThisEvent = null;  
+        this.filterReasons = new ArrayList<>();
+        this.eventAuditTrail = new ArrayList<>();
+        this.bestBidAsk = null;
+        this.recordNum = 0;
+    }
     public enum FilterReason {
 		NEGATIVE_SPREAD,
 		SPREAD_EXCEEDS_AVERAGE,

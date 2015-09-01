@@ -1,37 +1,8 @@
-db.priceevents.drop()
 db.priceoutliers.drop()
 db.runtimestats.drop()
-db.pricestats.drop()
 db.aggrconfig.drop()
 db.rawquotes.drop()
 db.finalquotes.drop()
-
-db.pricestats.insert({
-    "_id": {
-        "symbol": "USDCAD",
-        "hour": 17
-    },
-    "totalAsk": 19.865000000000006,
-    "averageAsk": 1.000705882352941,
-    "averageBid": 1.1764705882352944,
-    "averageSpread": -0.17576470588235296,
-    "maxSpread": 0.10000000000000009,
-    "minSpread": -0.399,
-    "count": 17
-})
-db.pricestats.insert({
-    "_id": {
-        "symbol": "EURNZD",
-        "hour": 18
-    },
-    "totalAsk": 20,
-    "averageAsk": 2,
-    "averageBid": 1.99,
-    "averageSpread": 0.020,
-    "maxSpread": 0.2,
-    "minSpread": 0.0001,
-    "count": 17
-})
 
 db.aggrconfig.insert({
     "globalconfig": {
@@ -66,5 +37,41 @@ db.aggrconfig.insert({
         "pctLeewayToPreviousAsk": 1.5,
         "pctAboveMaxSpread": 5.0,
         "pctBelowMinSpread": 2.0
+    }, {
+        "symbol": "AUDCAD",
+        "pctLeewayAllowedSpread": 3.0,
+        "pctLeewayToPreviousBid": 10.0,
+        "pctLeewayToPreviousAsk": 1.5,
+        "pctAboveMaxSpread": 5.0,
+        "pctBelowMinSpread": 2.0
     }]
 })
+
+
+db.pricestats.insert({
+    "_id": {
+        "symbol": "USDCAD",
+        "hour": 17
+    },
+    "totalAsk": 19.865000000000006,
+    "averageAsk": 1.000705882352941,
+    "averageBid": 1.1764705882352944,
+    "averageSpread": -0.17576470588235296,
+    "maxSpread": 0.10000000000000009,
+    "minSpread": -0.399,
+    "count": 17
+})
+db.pricestats.insert({
+    "_id": {
+        "symbol": "EURNZD",
+        "hour": 18
+    },
+    "totalAsk": 20,
+    "averageAsk": 2,
+    "averageBid": 1.99,
+    "averageSpread": 0.020,
+    "maxSpread": 0.2,
+    "minSpread": 0.0001,
+    "count": 17
+})
+

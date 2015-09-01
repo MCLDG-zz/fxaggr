@@ -44,9 +44,14 @@ public class PriceEventGenerator implements Runnable {
                 int cnt = 0;
 
                 while ((line = bufferedReader.readLine()) != null) {
+                    cnt++;
                     String[] tokens = line.split(",");
                     long sequence = ringBuffer.next();
                     PriceEvent priceEvent = ringBuffer.get(sequence);
+                    //Reset the state of the event. Since the events on the ringbuffer 
+                    //are reused, processing by event handlers will leave the event
+                    //in a specific state that must be reset before reusing the event
+                    priceEvent.resetEvent();
                     PriceEntity priceEntity = new PriceEntity();
                     priceEvent.setPriceEntity(priceEntity);
     
@@ -58,8 +63,9 @@ public class PriceEventGenerator implements Runnable {
                     priceEvent.getPriceEntity().setBid(Double.valueOf(tokens[1]));
                     priceEvent.getPriceEntity().setAsk(Double.valueOf(tokens[2]));
                     priceEvent.getPriceEntity().setSpread(priceEvent.getPriceEntity().getAsk() - priceEvent.getPriceEntity().getBid());
-                    priceEvent.getPriceEntity().setSymbol(csvFile.getName().substring(0,csvFile.getName().indexOf(".")));
                     priceEvent.getPriceEntity().setLiquidityProvider(tokens[3]);
+                    priceEvent.getPriceEntity().setSymbol(tokens[4]);
+                    priceEvent.recordNum = cnt; // for debugging purposes only
                     ringBuffer.publish(sequence);
                     // System.out.println("Data producer - published sequence: " + sequence + " bid: " 
                     //     + priceEvent.getPriceEntity().getBid() + " ask: " + priceEvent.getPriceEntity().getAsk()
@@ -72,7 +78,7 @@ public class PriceEventGenerator implements Runnable {
                 }
                 reader.close();
                 Date dateEnd = new Date();
-                System.out.println("Data producer 1 processed input file at: " + dateFormat.format(dateEnd));
+                System.out.println("Data producer processed " + cnt + " records from input file at: " + dateFormat.format(dateEnd));
             }
         }
         catch (IOException ex) {

@@ -10,6 +10,7 @@ import com.lmax.disruptor.EventHandler;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.util.JSON;
+import com.mongodb.WriteConcern;
 import org.bson.Document;
 
 import com.google.gson.Gson;
@@ -29,6 +30,7 @@ public class PriceEventToMongoEH implements EventHandler<PriceEvent> {
     	MongoClient mongoClient = null;
 		try {
 			mongoClient = new MongoClient();
+			//mongoClient.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
 		} 
 		catch (Exception e) {
 			// TODO Auto-generated catch block

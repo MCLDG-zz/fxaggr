@@ -1,0 +1,1 @@
+tar cvf fxaggr.tar -C target fxaggr-1.0-SNAPSHOT.jar -C /home/ubuntu/.m2/repository/com/lmax/disruptor/3.3.2/ disruptor-3.3.2.jar -C /home/ubuntu/.m2/repository/org/mongodb/mongo-java-driver/3.0.3/ mongo-java-driver-3.0.3.jar -C /home/ubuntu/.m2/repository/com/google/code/gson/gson/2.3.1/ gson-2.3.1.jar

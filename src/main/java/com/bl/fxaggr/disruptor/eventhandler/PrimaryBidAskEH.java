@@ -126,8 +126,7 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		*/
 		while (i < 2) {
 			if (PriceEventHelper.getCurrentPrimaryLiquidityProvider().equals(priceEntity.getLiquidityProvider())) {
-				System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - Primary Provider found. Config price scheme is: " + PriceEventHelper.getCurrentPrimaryLiquidityProvider() + ". Price Entity is: " + priceEntity.getLiquidityProvider()); 
-	
+
 				//update the timestamp to indicate when latest primary quote received
 				//TODO: I'm not sure whether we switch to secondary liquidity provider
 				//for the entire feed or only for a symbol. Here I'm keep the last time
@@ -137,8 +136,7 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 				return true;
 			}
 			else {
-				System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - Non Primary Provider found. Config price scheme is: " + PriceEventHelper.getCurrentPrimaryLiquidityProvider() + ". Price Entity is: " + priceEntity.getLiquidityProvider()); 
-				
+
 				//Check timestamp since last primary quote received. If within the configurable
 				//boundaries then the current liquidity provider remains the primary and this 
 				//non-primary quote is ignore. If we have not received a primary quote within the 
@@ -209,7 +207,6 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		
 		//Assume a best bid/ask has been created
 		event.setBestBidAsk(bestBidAsk);
-		System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - Best Bid/Ask created"); 
 		return true;
 	}
 }
