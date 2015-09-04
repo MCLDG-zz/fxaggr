@@ -16,17 +16,19 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 
 public class PriceEventGenerator implements Runnable {
-    private final RingBuffer < PriceEvent > ringBuffer;
+    private final RingBuffer <PriceEvent> ringBuffer;
+    private String testfileDirectory = null;
 
-    public PriceEventGenerator(RingBuffer < PriceEvent > ringBuffer) {
+    public PriceEventGenerator(RingBuffer <PriceEvent> ringBuffer, String testfileDirectory) {
         this.ringBuffer = ringBuffer;
+        this.testfileDirectory = testfileDirectory;
     }
 
     @Override
     public void run() {
         Thread t = Thread.currentThread();
         
-        File dir = new File("/home/ubuntu/workspace/fxaggr/src/main/java/com/bl/fxaggr/generator");
+        File dir = new File(testfileDirectory);
         File[] csvFiles = dir.listFiles(new FilenameFilter() { 
     	         public boolean accept(File dir, String filename)
     	              { return filename.endsWith(".csv"); }
@@ -56,7 +58,7 @@ public class PriceEventGenerator implements Runnable {
                     priceEvent.setPriceEntity(priceEntity);
     
                     //Publish the event
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd HHmmssSSS");
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.nnnnnnnnn");
                     LocalDateTime dateTime = LocalDateTime.parse(tokens[0], formatter);
                     priceEvent.getPriceEntity().setSequence(sequence);
                     priceEvent.getPriceEntity().setDatetime(dateTime);

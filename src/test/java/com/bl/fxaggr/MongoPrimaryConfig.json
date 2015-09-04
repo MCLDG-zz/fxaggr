@@ -44,10 +44,18 @@ db.aggrconfig.insert({
         "pctLeewayToPreviousAsk": 1.5,
         "pctAboveMaxSpread": 5.0,
         "pctBelowMinSpread": 2.0
+    }, {
+        "symbol": "USDGBP",
+        "pctLeewayAllowedSpread": 3.0,
+        "pctLeewayToPreviousBid": 10.0,
+        "pctLeewayToPreviousAsk": 1.5,
+        "pctAboveMaxSpread": 5.0,
+        "pctBelowMinSpread": 2.0
     }]
 })
 
 
+db.pricestats.drop()
 db.pricestats.insert({
     "_id": {
         "symbol": "USDCAD",

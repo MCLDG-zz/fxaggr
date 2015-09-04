@@ -23,6 +23,11 @@ public class PriceEventMain extends Thread {
     public static long producerCount = 99998;
     public static RingBuffer < PriceEvent > ringBuffer;
 
+    /**
+     * The 'main' method expects a folder/directory name as an argument. This
+     * will be passed to PriceEventGenerator, which will read the files 
+     * to obtain the test quotes
+     */
     public static void main(String[] args) throws Exception {
         // Executor that will be used to construct new threads for consumers
         Executor executor = Executors.newCachedThreadPool();
@@ -39,8 +44,8 @@ public class PriceEventMain extends Thread {
             new com.lmax.disruptor.BlockingWaitStrategy());
 
         EventHandler < PriceEvent > eh3 = new PriceFilterEH();
+        EventHandler < PriceEvent > eh4 = new PrimaryBidAskEH();
         EventHandler < PriceEvent > eh5 = new StatsEH();
-        EventHandler < PriceEvent > eh6 = new PrimaryBidAskEH();
         EventHandler < PriceEvent > eh20 = new PriceEventToMongoEH();
         EventHandler < PriceEvent > eh21 = new PriceToConsumerEH();
 
@@ -67,7 +72,8 @@ public class PriceEventMain extends Thread {
         // TODO - I'm sure we can do this more efficiently. For instance, PriceEventToMongoEH
         // does not have to complete before PriceFilterEH starts. We sort of want a copy of 
         // the event to be persisted to Mongo asynchronously while we start on the filtering.
-               disruptor.handleEventsWith(eh20).then(eh3).then(eh6).then(eh21).then(eh5,eh20);
+        disruptor.handleEventsWith(eh3).then(eh4).then(eh21).then(eh5,eh20);
+        //disruptor.handleEventsWith(eh3).then(eh4).then(eh21).then(eh5);
         //disruptor.handleEventsWith(eh20).then(eh3);
 
         // Start the Disruptor, starts all threads running
@@ -81,7 +87,8 @@ public class PriceEventMain extends Thread {
         Date dateStart = new Date();
         System.out.println("Data producer started at: " + dateFormat.format(dateStart));
         
-        PriceEventGenerator priceEventGenerator = new PriceEventGenerator(ringBuffer);
+        //PriceEventGenerator will read the files from the directory passed to this 'main' method
+        PriceEventGenerator priceEventGenerator = new PriceEventGenerator(ringBuffer, args[0]);
         priceEventGenerator.run();
         
         Date dateEnd = new Date();

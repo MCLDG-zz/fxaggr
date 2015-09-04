@@ -160,7 +160,7 @@ public class PriceEventTestMain extends Thread {
 
         //Check test results
         Thread.sleep(5000);
-        checkTestResults("/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/BestBidAskExpectedResults.json");
+        checkTestResults("/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestBestBidAskExpectedResults.json");
         Thread.sleep(2000);
     }
     /**

@@ -1,4 +1,4 @@
 20141102 170019000,1.000000,1.100000,Bloomberg,USDCAD,"ACCEPTED SEQ 0 - no best bid/ask, but this is the primary provider"
 20141102 170019001,1.010000,1.102000,Citibank,USDCAD,"FILTERED SEQ 1 - no best bid/ask, and not primary provider"
-20141102 170019002,1.020000,1.101000,Deutsche Bank,USDCAD,"ACCEPTED - best bid/ask calculated as 1.020/1.100"
+20141102 170019002,1.020000,1.101000,Deutsche Bank,USDCAD,"ACCEPTED SEQ 2 - best bid/ask calculated as 1.020/1.100 using prices from 3 providers"
 wait 6000

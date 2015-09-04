@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.time.temporal.ChronoUnit;
+import java.time.Instant;
+
 
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.MongoClient;
@@ -77,9 +80,41 @@ public class StatsManager {
             symbolStats.put(event.getPriceEntity().getSymbol(), symbolStat);
         }
 
+        //Update event counters/stats
         overallStats.totalNumberOfEvents++;
         symbolStat.totalNumberOfEvents++;
-        
+        long processingTimeNS = event.getFilterInstant().until(event.getSentToConsumerInstant(), ChronoUnit.NANOS);
+        overallStats.avgProcessingTime = (overallStats.avgProcessingTime + processingTimeNS) / overallStats.totalNumberOfEvents;
+        if (processingTimeNS > overallStats.maxProcessingTime) {
+            overallStats.maxProcessingTime = processingTimeNS;
+        }
+        if (processingTimeNS < overallStats.minProcessingTime) {
+            overallStats.minProcessingTime = processingTimeNS;
+        }
+        symbolStat.avgProcessingTime = (symbolStat.avgProcessingTime + processingTimeNS) / symbolStat.totalNumberOfEvents;
+        if (processingTimeNS > symbolStat.maxProcessingTime) {
+            symbolStat.maxProcessingTime = processingTimeNS;
+        }
+        if (processingTimeNS < symbolStat.minProcessingTime) {
+            symbolStat.minProcessingTime = processingTimeNS;
+        }
+
+        long persistenceTimeNS = event.getFilterInstant().until(event.getPersistInstant(), ChronoUnit.NANOS);
+        overallStats.avgPersistenceTime = (overallStats.avgPersistenceTime + persistenceTimeNS) / overallStats.totalNumberOfEvents;
+        if (persistenceTimeNS > overallStats.maxPersistenceTime) {
+            overallStats.maxPersistenceTime = persistenceTimeNS;
+        }
+        if (persistenceTimeNS < overallStats.minPersistenceTime) {
+            overallStats.minPersistenceTime = persistenceTimeNS;
+        }
+        symbolStat.avgPersistenceTime = (symbolStat.avgPersistenceTime + persistenceTimeNS) / symbolStat.totalNumberOfEvents;
+        if (persistenceTimeNS > symbolStat.maxPersistenceTime) {
+            symbolStat.maxPersistenceTime = persistenceTimeNS;
+        }
+        if (persistenceTimeNS < symbolStat.minPersistenceTime) {
+            symbolStat.minPersistenceTime = persistenceTimeNS;
+        }
+
         //Update the filtered event counters
         if (event.getEventStatus() == PriceEvent.EventStatus.FILTERED) {
             overallStats.totalNumberOfFilteredEvents++;

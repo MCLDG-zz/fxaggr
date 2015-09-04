@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.time.Instant;
+import java.time.LocalDateTime;
 
 /**
  * You would think that by now the Java working group would have fixed
@@ -29,6 +31,13 @@ public class PriceEvent {
     private List<String> eventAuditTrail = new ArrayList<>();
     private Map<String, PriceEntity> bestBidAsk = null;
     public long recordNum = 0;
+    
+    //Store useful timing information
+    private LocalDateTime quoteInstant;   //timestamp of quote
+    private Instant filterInstant;  //time event was processed by filter event handler
+    private Instant bidAskInstant;  //time event was processed by bid/ask event handler
+    private Instant sentToConsumerInstant; //time event was send to consumer
+    private Instant persistInstant; //time event was persisted
     
     /**
      * Events are reused by the disruptor. A reused event will still hold the state
@@ -134,6 +143,34 @@ public class PriceEvent {
     public Map<String, PriceEntity> getBestBidAsk() {
         return bestBidAsk;
     }
-    
-    
+    public void setQuoteInstant(LocalDateTime timestamp) {
+        this.quoteInstant = timestamp;
+    }
+    public void setFilterInstant() {
+        this.filterInstant = Instant.now();
+    }
+    public void setBidAskInstant() {
+        this.bidAskInstant = Instant.now();
+    }
+    public void setPersistInstant() {
+        this.persistInstant = Instant.now();
+    }
+    public void setSentToConsumerInstant() {
+        this.sentToConsumerInstant = Instant.now();
+    }
+    public LocalDateTime getQuoteInstant() {
+        return this.quoteInstant;
+    }
+    public Instant getFilterInstant() {
+        return this.filterInstant;
+    }
+    public Instant getBidAskInstant() {
+        return this.bidAskInstant;
+    }
+    public Instant getPersistInstant() {
+        return this.persistInstant;
+    }
+    public Instant getSentToConsumerInstant() {
+        return this.sentToConsumerInstant;
+    }
 }

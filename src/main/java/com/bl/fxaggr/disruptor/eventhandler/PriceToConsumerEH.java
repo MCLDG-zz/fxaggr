@@ -14,6 +14,8 @@ public class PriceToConsumerEH implements EventHandler<PriceEvent> {
 
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
 		event.setEventState(PriceEvent.EventState.FINAL_QUOTE);
+		event.setSentToConsumerInstant();
+		
 		//Ignore non-valid events
 		if (event.getEventStatus() != PriceEvent.EventStatus.VALID) {
 			return;

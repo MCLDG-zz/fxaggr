@@ -32,6 +32,8 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		priceEntity = event.getPriceEntity();
 		PriceEventHelper.storeLatestPriceQuote(priceEntity);
 		event.setEventState(PriceEvent.EventState.COMPARISON_COMPLETED);
+		event.setBidAskInstant();
+
 		
 		//Ensure we have a valid config
 		if (PriceEventHelper.aggrConfig == null) {
@@ -65,10 +67,17 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 				break;
 			case "Best Bid/Primary Ask": 
 				break;
+			/**
+			 * We try to process the price quote based on best bid/ask. If this is not possible
+			 * (for instance, where we do not have up-to-date quotes from a sufficient number of
+			 * LPs), we process the quote based on the primary bid/ask.
+			 */
 			case "Best Bid/Ask": 
 				if (!this.handleBestBidAskScheme(event)) {
-					event.setEventStatus(PriceEvent.EventStatus.FILTERED);
-					event.addFilteredReason(PriceEvent.FilterReason.NO_BEST_BIDASK_NOT_PRIMARY);
+					if (!this.handlePrimaryBidAskScheme(event)) {
+						event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+						event.addFilteredReason(PriceEvent.FilterReason.NO_BEST_BIDASK_NOT_PRIMARY);
+					}
 				}
 				break;
 		}
@@ -94,16 +103,16 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 
 		event.setAppliedSelectionScheme(PriceEvent.AppliedSelectionScheme.PRIMARY_BID_ASK);
 		
-		//If this price count is from the previous primary liquidity provider, increment
+		//If this price count is from a previous primary liquidity provider, increment
 		//the counter and check against the config. If it exceeds the config we will
 		//switch back to the previous primary provider
 		if (PriceEventHelper.isPreviousPrimaryLiquidityProvider() &&
-			PriceEventHelper.getPreviousPrimaryLiquidityProvider().equals(priceEntity.getLiquidityProvider())) {
+			PriceEventHelper.matchPreviousPrimaryLiquidityProvider(priceEntity.getLiquidityProvider())) {
 				
-			PriceEventHelper.incrementPriceCounterForPreviousPrimaryProvider();
-			if (PriceEventHelper.isRequiredNumberPreviousPrimaryQuotesReceived()) {
+			PriceEventHelper.incrementPriceCounterForPreviousPrimaryProvider(priceEntity.getLiquidityProvider());
+			if (PriceEventHelper.isRequiredNumberPreviousPrimaryQuotesReceived(priceEntity.getLiquidityProvider())) {
 				
-				if (PriceEventHelper.switchToPreviousBidAskLiquidityProvider()) {
+				if (PriceEventHelper.switchToPreviousBidAskLiquidityProvider(priceEntity.getLiquidityProvider())) {
 					event.setEventLPSwitch(PriceEvent.EventLPSwitch.SWITCH_BACK_PREVIOUS_PRIMARY);
 					System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - switched to previous Primary Provider: " + PriceEventHelper.getCurrentPrimaryLiquidityProvider()); 
 				}
@@ -160,7 +169,7 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 					}
 					else {
 						event.setEventLPSwitch(PriceEvent.EventLPSwitch.UNABLE_TO_SWITCH);
-						System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - UNABLE to switch to new Primary Provider"); 
+						System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - UNABLE to switch to new Primary Provider. Current provider is: "  + PriceEventHelper.getCurrentPrimaryLiquidityProvider()); 
 						return false;
 					}
 				}

@@ -48,9 +48,8 @@ public class PriceEventHelper {
 	private static Instant timeOfLastPrimaryPrice = null;
 	//after a provider switch, if we start to receive quotes from the previous
 	//primary provider we can consider switching back to the old primary
-	private static long numberPreviousPrimaryQuotesSinceLastProviderSwitch = 0;
 	private static Stack<String> previousPrimaryLiquidityProviders = new Stack<>();
-	private static String previousPrimaryLiquidityProvider = null;
+	private static Map<String, Long> countPreviousPrimaryLiquidityProviders = new HashMap<>();
 	private static boolean isPreviousPrimaryLiquidityProvider = false;
 
 	//the following variables contain runtime data specifically for the 
@@ -104,9 +103,6 @@ public class PriceEventHelper {
 	    long intervalMS = timeOfLastPrimaryPrice.until(Instant.now(), ChronoUnit.MILLIS);
 	    return (intervalMS > aggrConfig.globalconfig.primarybidask.timeintervalbeforeswitchingms);
 	}
-	public static boolean isRequiredNumberPreviousPrimaryQuotesReceived() {
-	    return (numberPreviousPrimaryQuotesSinceLastProviderSwitch > aggrConfig.globalconfig.primarybidask.numberquotesbeforeswitchtoprevious);
-	}
 	public static void setLiquidityProviders(String[] lps) {
 	    currentLiquidityProviders = lps;
 	}
@@ -117,13 +113,41 @@ public class PriceEventHelper {
 	    return currentPrimaryLiquidityProvider;
 	}
 	public static String getPreviousPrimaryLiquidityProvider() {
-	    return previousPrimaryLiquidityProvider;
+		String lp = null;
+		try {
+       		lp = previousPrimaryLiquidityProviders.peek();
+		}
+		catch (EmptyStackException ex) {
+       		lp = null;
+		}
+	    return lp;
 	}
+	/**
+	 * Returns true if we the LP argument matches a previous primary LP
+	 */
+	public static boolean matchPreviousPrimaryLiquidityProvider(String lp) {
+	    return previousPrimaryLiquidityProviders.contains(lp);
+	}
+	/**
+	 * Returns true if we have previously switched from the primary LP to
+	 * a secondary or tertial provider, and there are previous primary LPs
+	 */
 	public static boolean isPreviousPrimaryLiquidityProvider() {
 	    return isPreviousPrimaryLiquidityProvider;
 	}
-	public static long incrementPriceCounterForPreviousPrimaryProvider() {
-	    return numberPreviousPrimaryQuotesSinceLastProviderSwitch++;
+	public static long incrementPriceCounterForPreviousPrimaryProvider(String lp) {
+		Long l = countPreviousPrimaryLiquidityProviders.get(lp);
+		if (!(l == null)) {
+			countPreviousPrimaryLiquidityProviders.replace(lp, l + 1);
+		}
+	    return l;
+	}
+	public static boolean isRequiredNumberPreviousPrimaryQuotesReceived(String lp) {
+		Long l = countPreviousPrimaryLiquidityProviders.get(lp);
+	    return (l > aggrConfig.globalconfig.primarybidask.numberquotesbeforeswitchtoprevious);
+	}
+	public static void resetNumberPreviousPrimaryQuotesReceived() {
+		countPreviousPrimaryLiquidityProviders.forEach((k,v) -> {v = new Long(0);});
 	}
 	public static String getPriceSelectionScheme() {
 	    return priceSelectionScheme;
@@ -158,7 +182,6 @@ public class PriceEventHelper {
 		for (int i = 0; i < currentLiquidityProviders.length; i++) {
         	if (currentPrimaryLiquidityProvider.equals(currentLiquidityProviders[i])) {
         		//Check if there are more liquidity providers available
-				System.out.println("PriceEventHelper - about to switch providers. If no providers available, scheme is: " + aggrConfig.globalconfig.primarybidask.actionwhennomoreliquidityproviders + " i == (currentLiquidityProviders.length - 1)" + (i == (currentLiquidityProviders.length - 1))); 
         		if (i == (currentLiquidityProviders.length - 1)) {
         			if (aggrConfig.globalconfig.primarybidask.actionwhennomoreliquidityproviders.equals("Stay with current provider")) {
         				//Do nothing. Do not change providers
@@ -168,12 +191,10 @@ public class PriceEventHelper {
         		}
         		//Switch providers
         		previousPrimaryLiquidityProviders.push(currentPrimaryLiquidityProvider);
-        		previousPrimaryLiquidityProvider = currentPrimaryLiquidityProvider;
+        		countPreviousPrimaryLiquidityProviders.put(currentPrimaryLiquidityProvider, new Long(0));
         		isPreviousPrimaryLiquidityProvider = true;
-				numberPreviousPrimaryQuotesSinceLastProviderSwitch = 0;
+				resetNumberPreviousPrimaryQuotesReceived();
 				currentPrimaryLiquidityProvider = currentLiquidityProviders[i + 1];
-				
-				System.out.println("PriceEventHelper - after switching LP. New provider is: " + getCurrentPrimaryLiquidityProvider() + ". Previous provider was: " + previousPrimaryLiquidityProvider); 
 				return true;
         	}
 		}
@@ -198,31 +219,31 @@ public class PriceEventHelper {
 	 * 			<code>false</code> primary liquidity provider has not
 	 * 			successfully switched
 	 */
-	public static boolean switchToPreviousBidAskLiquidityProvider() {
+	public static boolean switchToPreviousBidAskLiquidityProvider(String lp) {
 		boolean successfulSwitch = false;
-		//First switch to previous provider
+		//First check that the previous LP exists
+		if (!(previousPrimaryLiquidityProviders.contains(lp))) {
+			return successfulSwitch;
+		}
+		//Pop the providers off the stack until we pop the one that will become
+		//the new primary
 		try {
-	       	String prevLP = previousPrimaryLiquidityProviders.pop();
-			currentPrimaryLiquidityProvider = prevLP;
-			numberPreviousPrimaryQuotesSinceLastProviderSwitch = 0;
-			System.out.println("PriceEventHelper - after switching LP to previous. New provider is: " + getCurrentPrimaryLiquidityProvider()); 
+			String prevLP = null;
+			while (!(lp.equals(prevLP))) {
+		       	prevLP = previousPrimaryLiquidityProviders.pop();
+	       		countPreviousPrimaryLiquidityProviders.remove(currentPrimaryLiquidityProvider);
+				currentPrimaryLiquidityProvider = prevLP;
+			}
+			resetNumberPreviousPrimaryQuotesReceived();
 			successfulSwitch = true;
 		}
 		catch (EmptyStackException ex) {
 			System.out.println("PriceEventHelper - could not switch to previous provider. No previous provider available: " + ex.toString()); 
-		}
-		//Then set the new previous provider
-		//I do this is two try-catch blocks so I can treat the same exception EmptyStackException
-		//differently
-		try {
-       		previousPrimaryLiquidityProvider = previousPrimaryLiquidityProviders.peek();
-       		isPreviousPrimaryLiquidityProvider = true;
-			System.out.println("PriceEventHelper - after switching LP to previous, new previous is: " + previousPrimaryLiquidityProvider); 
-		}
-		catch (EmptyStackException ex) {
-			//There is no previous provider, so set this to false
        		isPreviousPrimaryLiquidityProvider = false;
 		}
+   		if (previousPrimaryLiquidityProviders.size() > 0) {
+       		isPreviousPrimaryLiquidityProvider = true;
+   		}
 	    return successfulSwitch;
 	}
 	/**

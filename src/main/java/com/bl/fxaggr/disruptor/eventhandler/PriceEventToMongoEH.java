@@ -40,33 +40,24 @@ public class PriceEventToMongoEH implements EventHandler<PriceEvent> {
 	}
 
 	/**
-	 * Write the event to MongoDB. The state of the event will
-	 * determine which collection the price event is written to
+	 * Write the event to MongoDB. 
 	 */
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
-		//Convert the event to JSON
-    	String json = gson.toJson(event);
+		event.setPersistInstant();
+		
+		//Convert the event and original price entity to JSON
+    	String eventJson = gson.toJson(event);
+    	String originalPriceJson = gson.toJson(event.getPriceEntity());
 
-		//Seems Java is clever enough to infer the type of the enum from the 
-		//switch statement and won't allow it to be added. This doesn't help 
-		//you (the programmer) to know which enum is referred to, so I'll 
-		//let you know here:
-		//
-		//	PriceEvent.EventState
-		//
-		switch (event.getEventState()) {
-			case NEW_QUOTE:
-				db.getCollection("rawquotes").insertOne(
-					new Document("rawpricequote", Document.parse(json)));
-				break;
-			case FILTER_COMPLETED:
-				break;
-			case COMPARISON_COMPLETED:
-				break;
-			case FINAL_QUOTE:
-				db.getCollection("finalquotes").insertOne(
-					new Document("finalpricequote", Document.parse(json)));
-				break;
+		//Store the original, raw quote
+		db.getCollection("rawquotes").insertOne(
+			new Document("rawpricequote", Document.parse(originalPriceJson)));
+		
+		//If the event contains a 'final quote', i.e. a quote that has been sent
+		//to the consumer, then store the event
+		if (event.getEventState() == PriceEvent.EventState.FINAL_QUOTE) {
+			db.getCollection("finalquotes").insertOne(
+				new Document("finalpricequote", Document.parse(eventJson)));
 		}
 	}
 }

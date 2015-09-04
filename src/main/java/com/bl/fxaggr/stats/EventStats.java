@@ -14,4 +14,11 @@ public class EventStats {
     public Map <PriceEvent.FilterReason, Long> numberPerFilteredReason = new HashMap <> ();
     public long maxSecondsBetweenQuoteTimeAndProcessedTime;
     public long minSecondsBetweenQuoteTimeAndProcessedTime;
+    public long maxProcessingTime;
+    public long minProcessingTime;
+    public long avgProcessingTime;
+    public long maxPersistenceTime;
+    public long minPersistenceTime;
+    public long avgPersistenceTime;
+    
 }

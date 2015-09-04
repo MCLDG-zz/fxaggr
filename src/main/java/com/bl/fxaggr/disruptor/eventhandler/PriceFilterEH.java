@@ -83,6 +83,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
 
 		event.setEventState(PriceEvent.EventState.FILTER_COMPLETED);
+		event.setFilterInstant();
 		
 		if (PriceEventHelper.aggrConfig == null) {
 			System.out.println("PriceFilterEH cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
@@ -252,7 +253,6 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 				previousPrice.bid = priceEntity.getBid();
 				previousPrice.spread = spread;
 				previousPriceMap.put(currency, previousPrice);
-		  		System.out.println("Number of Previous Price items: " + previousPriceMap.size());
 			}
 		}
 		else {
