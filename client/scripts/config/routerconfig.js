@@ -18,6 +18,16 @@ fxApp.config(function($stateProvider, $urlRouterProvider) {
         templateUrl: 'views/aggrconfig.html'
     })
 
+    .state('globalconfig', {
+        url: '/globalconfig',
+        templateUrl: 'views/globalconfig.html'
+    })
+
+    .state('currencyconfig', {
+        url: '/currencyconfig',
+        templateUrl: 'views/currencyconfig.html'
+    })
+
     .state('pricestats', {
         url: '/pricestats',
         templateUrl: 'views/pricestats.html'

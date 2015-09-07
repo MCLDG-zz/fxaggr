@@ -172,11 +172,33 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
 
         // Add/remove liquidity providers
         $scope.addLiquidityProvider = function() {
-            $scope.aggrconfig.globalconfig.liquidityproviders.push(this.globalconfig.addLiquidityProvider);
+            $scope.aggrconfig.globalconfig.liquidityproviders.push(this.lp.newProvider);
         }
-        $scope.removeLiquidityProvider = function(provider) {
-            if ($scope.aggrconfig.globalconfig.liquidityproviders.indexOf(this.globalconfigform.selectedliquidityprovider) != -1) {
-                $scope.aggrconfig.globalconfig.liquidityproviders.splice($scope.aggrconfig.globalconfig.liquidityproviders.indexOf(this.globalconfigform.selectedliquidityprovider), 1);
+        $scope.removeLiquidityProvider = function(providerIndex) {
+            if ($scope.aggrconfig.globalconfig.liquidityproviders.length >= providerIndex) {
+                $scope.aggrconfig.globalconfig.liquidityproviders.splice(providerIndex, 1);
+            }
+        }
+        $scope.selectLiquidityProvider = function(providerIndex) {
+            $scope.selectedLiquidityProvider = providerIndex;
+        }
+        $scope.moveLiquidityProvider = function(direction) {
+            var tmp;
+            if (direction == "up") {
+                if ($scope.selectedLiquidityProvider > 0) {
+                    tmp = $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider];
+                    $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider] = 
+                        $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider - 1];
+                    $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider - 1] = tmp;
+                }
+            }
+            else if (direction == "down") {
+                if ($scope.selectedLiquidityProvider < $scope.aggrconfig.globalconfig.liquidityproviders.length - 1) {
+                    tmp = $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider];
+                    $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider] = 
+                        $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider + 1];
+                    $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider + 1] = tmp;
+                }
             }
         }
 

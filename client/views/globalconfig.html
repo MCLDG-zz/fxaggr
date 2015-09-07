@@ -1,0 +1,81 @@
+<div class="row">
+    <div class="alert-success" ng-show="updateGlobalConfigResult">
+        <div>
+            <p>{{updateGlobalConfigResult}}</p>
+        </div>
+    </div>
+</div>
+
+<form class="form-horizontal" role="form" ng-submit="saveGlobalConfig()" name="globalConfigForm">
+    <div class="form-group has-feedback">
+        <table class="table table-striped table-bordered table table-condensed table-responsive">
+            <thead>
+                <tr>
+                    <th colspan="2">Global Config</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Accept after # Consecutive Spikes</td>
+                    <td>
+                        <input type="number" required min="0" class="form-control" id="numberconsecutivespikesfiltered" name="numberconsecutivespikesfiltered" ng-model="aggrconfig.globalconfig.numberconsecutivespikesfiltered">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Liquidity Providers</td>
+                    <td>
+
+                        <table class="table table-condensed table-responsive table-hover">
+                            <thead>
+                                <tr>
+                                    <th colspan="1">Provider</th>
+                                    <th colspan="1">Priority</th>
+                                    <th colspan="1"></th>
+                                </tr>
+                            </thead>
+                            <tbody data-ng-repeat='item in aggrconfig.globalconfig.liquidityproviders' class="list">
+                                <tr ng-click="selectLiquidityProvider($index)">
+                                    <td class="span2">{{item}}</td>
+                                    <td class="span2">{{$index}}</td>
+                                    <td class="span1" rowspan="2" style="vertical-align:middle;">
+                                        <a href class="btn btn-danger btn-xs" ng-click="removeLiquidityProvider($index)" title="Remove Liquidity Provider">
+                                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <a href class="btn btn-danger btn-xs" ng-click="moveLiquidityProvider('up')" title="Move Up">
+                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                        <a href class="btn btn-danger btn-xs" ng-click="moveLiquidityProvider('down')" title="Move Down">
+                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+
+                        <div class="input-group">
+                            <span class="input-group-btn">
+                                <a href class="btn btn-success InputAddOn-item" ng-click="addLiquidityProvider()">Add Provider</a>
+                            </span>
+                            <input type="text" class="InputAddOn-field form-control" ng-model="lp.newProvider" placeholder="Add Liquidity Provider">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Primary Liquidity Provider</td>
+                    <td>
+                        <select ng-model="aggrconfig.globalconfig.primaryliquidityprovider" class="form-control" name="primaryLiquidityProvider" ng-options="i for i in aggrconfig.globalconfig.liquidityproviders">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Price Selection Scheme</td>
+                    <td>
+                        <select ng-model="aggrconfig.globalconfig.scheme" class="form-control" name="scheme" ng-options="i for i in aggrconfig.globalconfig.availableschemes">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div>
+            <button type="submit" class="btn btn-primary" ng-disabled="globalConfigForm.$invalid">Update</button>
+            <button type="button" ng-click="loadAggrConfig()" class="btn">Cancel</button>
+        </div>
+    </div>
+</form>

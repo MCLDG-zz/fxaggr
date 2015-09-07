@@ -83,36 +83,48 @@ public class StatsManager {
         //Update event counters/stats
         overallStats.totalNumberOfEvents++;
         symbolStat.totalNumberOfEvents++;
-        long processingTimeNS = event.getFilterInstant().until(event.getSentToConsumerInstant(), ChronoUnit.NANOS);
-        overallStats.avgProcessingTime = (overallStats.avgProcessingTime + processingTimeNS) / overallStats.totalNumberOfEvents;
-        if (processingTimeNS > overallStats.maxProcessingTime) {
-            overallStats.maxProcessingTime = processingTimeNS;
+        if (event.getFilterInstant() == null || event.getSentToConsumerInstant() == null) {
+            System.out.println("StatsManager - event does not contain processing time. event.getFilterInstant() : " + event.getFilterInstant()
+                + " event.getSentToConsumerInstant() : " + event.getSentToConsumerInstant());
         }
-        if (processingTimeNS < overallStats.minProcessingTime) {
-            overallStats.minProcessingTime = processingTimeNS;
-        }
-        symbolStat.avgProcessingTime = (symbolStat.avgProcessingTime + processingTimeNS) / symbolStat.totalNumberOfEvents;
-        if (processingTimeNS > symbolStat.maxProcessingTime) {
-            symbolStat.maxProcessingTime = processingTimeNS;
-        }
-        if (processingTimeNS < symbolStat.minProcessingTime) {
-            symbolStat.minProcessingTime = processingTimeNS;
+        else {
+            long processingTimeNS = event.getFilterInstant().until(event.getSentToConsumerInstant(), ChronoUnit.NANOS);
+            overallStats.avgProcessingTime = (overallStats.avgProcessingTime + processingTimeNS) / overallStats.totalNumberOfEvents;
+            if (processingTimeNS > overallStats.maxProcessingTime) {
+                overallStats.maxProcessingTime = processingTimeNS;
+            }
+            if (processingTimeNS < overallStats.minProcessingTime) {
+                overallStats.minProcessingTime = processingTimeNS;
+            }
+            symbolStat.avgProcessingTime = (symbolStat.avgProcessingTime + processingTimeNS) / symbolStat.totalNumberOfEvents;
+            if (processingTimeNS > symbolStat.maxProcessingTime) {
+                symbolStat.maxProcessingTime = processingTimeNS;
+            }
+            if (processingTimeNS < symbolStat.minProcessingTime) {
+                symbolStat.minProcessingTime = processingTimeNS;
+            }
         }
 
-        long persistenceTimeNS = event.getFilterInstant().until(event.getPersistInstant(), ChronoUnit.NANOS);
-        overallStats.avgPersistenceTime = (overallStats.avgPersistenceTime + persistenceTimeNS) / overallStats.totalNumberOfEvents;
-        if (persistenceTimeNS > overallStats.maxPersistenceTime) {
-            overallStats.maxPersistenceTime = persistenceTimeNS;
+        if (event.getFilterInstant() == null || event.getPersistInstant() == null) {
+            System.out.println("StatsManager - event does not contain processing time. event.getFilterInstant() : " + event.getFilterInstant()
+                + " event.getPersistInstant() : " + event.getPersistInstant());
         }
-        if (persistenceTimeNS < overallStats.minPersistenceTime) {
-            overallStats.minPersistenceTime = persistenceTimeNS;
-        }
-        symbolStat.avgPersistenceTime = (symbolStat.avgPersistenceTime + persistenceTimeNS) / symbolStat.totalNumberOfEvents;
-        if (persistenceTimeNS > symbolStat.maxPersistenceTime) {
-            symbolStat.maxPersistenceTime = persistenceTimeNS;
-        }
-        if (persistenceTimeNS < symbolStat.minPersistenceTime) {
-            symbolStat.minPersistenceTime = persistenceTimeNS;
+        else {
+            long persistenceTimeNS = event.getFilterInstant().until(event.getPersistInstant(), ChronoUnit.NANOS);
+            overallStats.avgPersistenceTime = (overallStats.avgPersistenceTime + persistenceTimeNS) / overallStats.totalNumberOfEvents;
+            if (persistenceTimeNS > overallStats.maxPersistenceTime) {
+                overallStats.maxPersistenceTime = persistenceTimeNS;
+            }
+            if (persistenceTimeNS < overallStats.minPersistenceTime) {
+                overallStats.minPersistenceTime = persistenceTimeNS;
+            }
+            symbolStat.avgPersistenceTime = (symbolStat.avgPersistenceTime + persistenceTimeNS) / symbolStat.totalNumberOfEvents;
+            if (persistenceTimeNS > symbolStat.maxPersistenceTime) {
+                symbolStat.maxPersistenceTime = persistenceTimeNS;
+            }
+            if (persistenceTimeNS < symbolStat.minPersistenceTime) {
+                symbolStat.minPersistenceTime = persistenceTimeNS;
+            }
         }
 
         //Update the filtered event counters
