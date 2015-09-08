@@ -25,6 +25,7 @@ public class PriceEvent {
     private EventStatus eventStatus = EventStatus.VALID;
     private EventState eventState = EventState.NEW_QUOTE;
     private AppliedSelectionScheme appliedSelectionScheme = AppliedSelectionScheme.NONE;
+    private String configuredSelectionScheme = null;
     private EventLPSwitch eventLPSwitch = null;  //holds type of LP switch if a switch hapened while processing this event
     private String primaryLPWhenHandlingThisEvent = null;  //holds the primary LP when this event was handled
     private List<FilterReason> filterReasons = new ArrayList<>();
@@ -48,6 +49,7 @@ public class PriceEvent {
         this.eventStatus = EventStatus.VALID;
         this.eventState = EventState.NEW_QUOTE;
         this.appliedSelectionScheme = AppliedSelectionScheme.NONE;
+        this.configuredSelectionScheme = null;
         this.eventLPSwitch = null;  
         this.primaryLPWhenHandlingThisEvent = null;  
         this.filterReasons = new ArrayList<>();
@@ -121,6 +123,13 @@ public class PriceEvent {
     }
     public AppliedSelectionScheme getAppliedSelectionScheme() {
         return appliedSelectionScheme;
+    }
+    
+    public void setConfiguredSelectionScheme(String configuredSelectionScheme) {
+        this.configuredSelectionScheme = configuredSelectionScheme;
+    }
+    public String getConfiguredSelectionScheme() {
+        return configuredSelectionScheme;
     }
     
     public boolean addFilteredReason(FilterReason filteredReason) {

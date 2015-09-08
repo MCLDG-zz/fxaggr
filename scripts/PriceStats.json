@@ -1,36 +1,36 @@
 db.pricestats.drop()
 
-db.rawquotes.aggregate(
+db.finalquotes.aggregate(
     [{
         $group: {
             _id: {
-                symbol: "$rawpricequote.priceEntity.symbol",
-                hour: "$rawpricequote.priceEntity.datetime.time.hour"
+                symbol: "$finalpricequote.priceEntity.symbol",
+                hour: "$finalpricequote.priceEntity.datetime.time.hour"
             },
             totalAsk: {
                 $sum: {
-                    $multiply: ["$rawpricequote.priceEntity.bid", "$rawpricequote.priceEntity.ask"]
+                    $multiply: ["$finalpricequote.priceEntity.bid", "$finalpricequote.priceEntity.ask"]
                 }
             },
             averageAsk: {
-                $avg: "$rawpricequote.priceEntity.ask"
+                $avg: "$finalpricequote.priceEntity.ask"
             },
             averageBid: {
-                $avg: "$rawpricequote.priceEntity.bid"
+                $avg: "$finalpricequote.priceEntity.bid"
             },
             averageSpread: {
                 $avg: {
-                    $subtract: ["$rawpricequote.priceEntity.ask", "$rawpricequote.priceEntity.bid"]
+                    $subtract: ["$finalpricequote.priceEntity.ask", "$finalpricequote.priceEntity.bid"]
                 }
             },
             maxSpread: {
                 $max: {
-                    $subtract: ["$rawpricequote.priceEntity.ask", "$rawpricequote.priceEntity.bid"]
+                    $subtract: ["$finalpricequote.priceEntity.ask", "$finalpricequote.priceEntity.bid"]
                 }
             },
             minSpread: {
                 $min: {
-                    $subtract: ["$rawpricequote.priceEntity.ask", "$rawpricequote.priceEntity.bid"]
+                    $subtract: ["$finalpricequote.priceEntity.ask", "$finalpricequote.priceEntity.bid"]
                 }
             },
             count: {

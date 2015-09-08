@@ -11,6 +11,9 @@ public class EventStats {
     public long totalLiquidityProviderSwitches;
     public long totalLiquidityProviderSwitchBacks;
     public long totalLiquidityProviderUnableToSwitch;
+    public long totalNumberConfiguredBestBidAskEvents;
+    public long totalNumberAppliedBestBidAskEvents;
+    public long totalNumberAppliedPrimaryBidAskEvents;
     public Map <PriceEvent.FilterReason, Long> numberPerFilteredReason = new HashMap <> ();
     public long maxSecondsBetweenQuoteTimeAndProcessedTime;
     public long minSecondsBetweenQuoteTimeAndProcessedTime;

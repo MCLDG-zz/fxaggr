@@ -83,8 +83,8 @@ public class PriceEventHelper {
 		for (AggrConfig.AggrConfigCurrency currencyconfig : aggrConfig.currencyconfig) {
        		aggrcurrencyconfigMap.put(currencyconfig.symbol, currencyconfig);
 		}
-		currentLiquidityProviders = aggrConfig.globalconfig.primarybidask.primarysecondarytertiaryproviders;
-		currentPrimaryLiquidityProvider = aggrConfig.globalconfig.primarybidask.primarysecondarytertiaryproviders[0];
+		currentLiquidityProviders = aggrConfig.globalconfig.liquidityproviders;
+		currentPrimaryLiquidityProvider = aggrConfig.globalconfig.liquidityproviders[0];
 		numberconsecutivespikesfiltered = aggrConfig.globalconfig.filteringrules.numberconsecutivespikesfiltered;
 		timeintervalformatchingquotesms = aggrConfig.globalconfig.bestbidask.timeintervalformatchingquotesms;
 		minimummatchingquotesrequired = aggrConfig.globalconfig.bestbidask.minimummatchingquotesrequired;

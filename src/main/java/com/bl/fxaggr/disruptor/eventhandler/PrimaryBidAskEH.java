@@ -32,9 +32,9 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		priceEntity = event.getPriceEntity();
 		PriceEventHelper.storeLatestPriceQuote(priceEntity);
 		event.setEventState(PriceEvent.EventState.COMPARISON_COMPLETED);
+		event.setConfiguredSelectionScheme(PriceEventHelper.getPriceSelectionScheme());
 		event.setBidAskInstant();
 
-		
 		//Ensure we have a valid config
 		if (PriceEventHelper.aggrConfig == null) {
 			System.out.println("PrimaryBidAskEH cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
@@ -141,7 +141,6 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 				//for the entire feed or only for a symbol. Here I'm keep the last time
 				//of a quote for the entire feed - not per symbol
 				PriceEventHelper.notePrimaryPriceQuote();
-				event.setAppliedSelectionScheme(PriceEvent.AppliedSelectionScheme.PRIMARY_BID_ASK);
 				return true;
 			}
 			else {
@@ -205,7 +204,6 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		double bestBid = 0;
 		double bestAsk = 0;
 		
-		event.setAppliedSelectionScheme(PriceEvent.AppliedSelectionScheme.BEST_BID_ASK);
 		/*
 		* Get the best bid/ask combination
 		*/
@@ -215,6 +213,7 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		}
 		
 		//Assume a best bid/ask has been created
+		event.setAppliedSelectionScheme(PriceEvent.AppliedSelectionScheme.BEST_BID_ASK);
 		event.setBestBidAsk(bestBidAsk);
 		return true;
 	}

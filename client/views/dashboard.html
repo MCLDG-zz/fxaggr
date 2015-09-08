@@ -18,7 +18,7 @@
 
 <div class="col-lg-6 col-sm-12" id="bar-chart" ng-controller="fxaggrCtrl">
     <div class="panel panel-default">
-        <div class="panel-heading">Total Filtered Events</div>
+        <div class="panel-heading">Total Events vs. Filtered Events</div>
         <div class="panel-body">
             <canvas id="bar" class="chart chart-bar" data="totalchartdata" labels="totalchartlabel"></canvas>
         </div>
@@ -26,21 +26,30 @@
 </div>
 
 
-<div class="col-lg-6 col-sm-12" id="line-chart" ng-controller="LineCtrl">
+<div class="col-lg-6 col-sm-12" id="line-chart" ng-controller="fxaggrCtrl">
     <div class="panel panel-default">
-        <div class="panel-heading">Line Chart</div>
+        <div class="panel-heading">Average Processing Time (Nanoseconds, 10E-09s)</div>
         <div class="panel-body">
-            <canvas id="line" class="chart chart-line" data="linechartdata" labels="labels"></canvas>
+            <canvas id="line" class="chart chart-line" data="chartavgprocessingtime" labels="avgprocessingtimelabels"></canvas>
         </div>
     </div>
 </div>
 
 <div class="col-lg-6 col-sm-12" id="line-chart" ng-controller="fxaggrCtrl">
     <div class="panel panel-default">
-        <div class="panel-heading">Filtered Event Trend</div>
+        <div class="panel-heading">Applied Best Bid Ask</div>
         <div class="panel-body">
-            <canvas id="line" class="chart chart-line" data="totaltrendchartdata" labels="labels"></canvas>
+            <canvas id="pie" class="chart chart-pie" data="chartBestBidAsk" labels="chartBestBidAskLabels"></canvas>
         </div>
     </div>
 </div>
+
+<!--<div class="col-lg-6 col-sm-12" id="line-chart" ng-controller="fxaggrCtrl">-->
+<!--    <div class="panel panel-default">-->
+<!--        <div class="panel-heading">Filtered Event Trend</div>-->
+<!--        <div class="panel-body">-->
+<!--            <canvas id="line" class="chart chart-line" data="totaltrendchartdata"></canvas>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
 

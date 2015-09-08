@@ -1,6 +1,6 @@
 package com.bl.fxaggr.stats;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.Timer;
@@ -34,7 +34,7 @@ import com.bl.fxaggr.disruptor.PriceEntity;
  * and persisted regularly, so as not to overload the DB.
  */
 public class StatsManager {
-    private static Map <String, EventStats> symbolStats = new HashMap <> ();
+    private static Map <String, EventStats> symbolStats = new ConcurrentHashMap<>();
     private static EventStats overallStats = new EventStats();
 	private static MongoDatabase db = null;
 	private static BsonValue overallStatsID;
@@ -52,8 +52,8 @@ public class StatsManager {
         };
     
         Timer timer = new Timer();
-        long delay = 1000;
-        long interval= 1 * 1000; 
+        long delay = 5000;
+        long interval= 1 * 5000; 
     
         timer.scheduleAtFixedRate(task, delay, interval);
         
@@ -106,8 +106,8 @@ public class StatsManager {
         }
 
         if (event.getFilterInstant() == null || event.getPersistInstant() == null) {
-            System.out.println("StatsManager - event does not contain processing time. event.getFilterInstant() : " + event.getFilterInstant()
-                + " event.getPersistInstant() : " + event.getPersistInstant());
+            // System.out.println("StatsManager - event does not contain processing time. event.getFilterInstant() : " + event.getFilterInstant()
+            //     + " event.getPersistInstant() : " + event.getPersistInstant());
         }
         else {
             long persistenceTimeNS = event.getFilterInstant().until(event.getPersistInstant(), ChronoUnit.NANOS);
@@ -160,9 +160,23 @@ public class StatsManager {
             overallStats.totalLiquidityProviderUnableToSwitch++;
             symbolStat.totalLiquidityProviderUnableToSwitch++;
         }
+        
+        //Update best bid/ask counters
+        if (event.getConfiguredSelectionScheme() != null && event.getConfiguredSelectionScheme().equals("Best Bid/Ask")) {
+            overallStats.totalNumberConfiguredBestBidAskEvents++;
+            symbolStat.totalNumberConfiguredBestBidAskEvents++;
+            if (event.getAppliedSelectionScheme() != null && event.getAppliedSelectionScheme() == PriceEvent.AppliedSelectionScheme.BEST_BID_ASK) {
+                overallStats.totalNumberAppliedBestBidAskEvents++;
+                symbolStat.totalNumberAppliedBestBidAskEvents++;
+            }
+            else if (event.getAppliedSelectionScheme() != null && event.getAppliedSelectionScheme() == PriceEvent.AppliedSelectionScheme.PRIMARY_BID_ASK) {
+                overallStats.totalNumberAppliedPrimaryBidAskEvents++;
+                symbolStat.totalNumberAppliedPrimaryBidAskEvents++;
+            }
+        }
     }
     public static void resetStats() {
-        symbolStats = new HashMap <String, EventStats> ();
+        symbolStats.clear();
         overallStats = new EventStats();
     }
     private static void persistStats() {

@@ -6,18 +6,18 @@ db.finalquotes.drop()
 
 db.aggrconfig.insert({
     "globalconfig": {
-        "availableschemes": ["Primary Bid/Ask", "Primary Bid/Best Ask", "Best Bid/Primary Ask", "Best Bid/Ask"],
-        "scheme": "Primary Bid/Ask",
+        "availableschemes": ["Primary Bid/Ask", "Best Bid/Ask"],
+        "scheme": "Best Bid/Ask",
         "liquidityproviders": ["HKD-DB", "HK-Saxo F", "CXSymbol"],
         "primarybidask": {
-            "primarysecondarytertiaryproviders": ["HKD-DB", "HK-Saxo F", "CXSymbol"],
             "timeintervalbeforeswitchingms": 5000,
             "numberquotesbeforeswitchtoprevious": 3,
             "actionwhennomoreliquidityproviders": "Stay with current provider"
         },
         "bestbidask": {
-            "timeintervalformatchingquotesms": 500,
-            "minimummatchingquotesrequired": 3
+            "timeintervalformatchingquotesms": 1500,
+            "minimummatchingquotesrequired": 2,
+            "actionwhenbestnotpossible": "Revert to Primary Bid/Ask"
         },
         "filteringrules": {
             "numberconsecutivespikesfiltered": 3
@@ -27,296 +27,296 @@ db.aggrconfig.insert({
         "symbol": "USDCAD",
         "pctLeewayAllowedSpread": 2.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 5.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 5.5
+        
+        
     }, {
         "symbol": "EURNZD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "AUDCAD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "USDGBP",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "NZDCAD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "NZDEUR",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "NZDUSD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "CADJPY",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "CHFJPY",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "USDSEK",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "NZDAUD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "AUDUSD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "EURCAD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "AUDNZD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "EURAUD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "USDHKD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "CADCHF",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "EURGBP",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "GBPAUD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "NZDGBP",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "GBPUSD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "GBPNZD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "NZDCHF",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "AUDCHF",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "EURJPY",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "USDCHF",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "AUDJPY",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "NZDJPY",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "EURCHF",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "EURUSD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "USDJPY",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "EURGBP",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "GBPCAD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "GBPJPY",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "USDSGD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "GBPCAD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "XAUUSD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "GBPCHF",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "USDCNH",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "EURGBP",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "XAGUSD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }, {
         "symbol": "USDCNY",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
+        
+        
     }]
 })
 

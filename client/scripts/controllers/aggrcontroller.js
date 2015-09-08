@@ -11,10 +11,21 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
         $scope.runtimestats = [];
         $scope.liquidityProviders = [];
         $scope.liquidityProvider;
+        $scope.countryToCurrencyMap = null;
 
         /*
          * Scope items used for graphing statistics
          */
+         //Unbelievable. After hours of wondering why my line chart doesn't work it seems
+         //the charting package required a multi-dimensional array for a single line chart
+        $scope.chartBestBidAskLabels = ["Applied Best Bid/Ask", "Applied Primary Bid/Ask"];
+        $scope.chartBestBidAsk = [];
+        $scope.totalNumberConfiguredBestBidAskEvents;
+        $scope.totalNumberAppliedBestBidAskEvents;
+        $scope.totalNumberAppliedPrimaryBidAskEvents;
+        $scope.chartavgprocessingtime = [];
+        $scope.avgprocessingtime = [];
+        $scope.avgprocessingtimelabels = [1,2,3,4,5,6,7,8,9,10];
         $scope.currencies = [];
         $scope.filtertype = [];
         $scope.filtertypecount = [];
@@ -64,6 +75,14 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
                     $scope.currencyfilteredevents.push(data[i].totalNumberOfFilteredEvents);
                 }
                 else {
+                    $scope.avgprocessingtime.push(data[i].avgProcessingTime);
+                    $scope.avgprocessingtime.splice(0, $scope.avgprocessingtime.length - 10);
+                    $scope.chartavgprocessingtime[0] = $scope.avgprocessingtime;
+                    $scope.totalNumberConfiguredBestBidAskEvents = data[i].totalNumberConfiguredBestBidAskEvents;
+                    $scope.totalNumberAppliedBestBidAskEvents = data[i].totalNumberAppliedBestBidAskEvents;
+                    $scope.totalNumberAppliedPrimaryBidAskEvents = data[i].totalNumberAppliedPrimaryBidAskEvents;
+                    $scope.chartBestBidAsk[0] = $scope.totalNumberAppliedBestBidAskEvents;
+                    $scope.chartBestBidAsk[1] = $scope.totalNumberAppliedPrimaryBidAskEvents;
                     $scope.filtertype = [];
                     $scope.filtertypecount = [];
                     for (var key in data[i].numberPerFilteredReason) {
@@ -172,7 +191,10 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
 
         // Add/remove liquidity providers
         $scope.addLiquidityProvider = function() {
-            $scope.aggrconfig.globalconfig.liquidityproviders.push(this.lp.newProvider);
+            if (!(typeof this.lp === "undefined" || this.lp == null)) {
+                $scope.aggrconfig.globalconfig.liquidityproviders.push(this.lp.newProvider);
+                this.lp = null;
+            }
         }
         $scope.removeLiquidityProvider = function(providerIndex) {
             if ($scope.aggrconfig.globalconfig.liquidityproviders.length >= providerIndex) {
@@ -190,6 +212,7 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
                     $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider] = 
                         $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider - 1];
                     $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider - 1] = tmp;
+                    $scope.selectedLiquidityProvider-=1;
                 }
             }
             else if (direction == "down") {
@@ -198,9 +221,52 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
                     $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider] = 
                         $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider + 1];
                     $scope.aggrconfig.globalconfig.liquidityproviders[$scope.selectedLiquidityProvider + 1] = tmp;
+                    $scope.selectedLiquidityProvider+=1;
                 }
             }
         }
+
+        $scope.loadCountryToCurrency = function() {
+            var httpReq = $http.get('/ref/countrytocurrency').
+            success(function(data, status, headers, config) {
+                //ensure we received a response
+                if (data.length < 1) {
+                    return;
+                }
+                $scope.countryToCurrencyMap = data[0];
+            }).
+            error(function(data, status, headers, config) {
+                $scope.countryToCurrencyMap = {
+                    "error retrieving country to currency mapping": status
+                };
+            });
+        };
+
+        $scope.getCountryForCurrency = function(currency) {
+            for (var prop in $scope.countryToCurrencyMap) {
+                if ($scope.countryToCurrencyMap.hasOwnProperty(prop)) {
+                    if ($scope.countryToCurrencyMap[prop] === currency) {
+                        return prop;
+                    }
+                }
+            }
+            return null;
+        };
+
+        $scope.getFlagForFirstCurrency = function(symbol) {
+            var firstCurrency = symbol.substr(0, 3);
+            if (firstCurrency) {
+                return "views/images/flags/" + $scope.getCountryForCurrency(firstCurrency) + ".png";
+            }
+        };
+
+        $scope.getFlagForSecondCurrency = function(symbol) {
+            var secondCurrency = symbol.substr(3, 3);
+            if (secondCurrency) {
+                return "views/images/flags/" + $scope.getCountryForCurrency(secondCurrency) + ".png";
+            }
+        };
+
 
         // $scope.updateBalance = function() {
         //     var httpReq = $http.post('/users/updatebalance', $scope.balance[0]).
@@ -250,6 +316,7 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
         $scope.init = function() {
             $scope.loadAggrConfig();
             $scope.loadPriceStats();
+            $scope.loadCountryToCurrency();
         };
 
         //Run the init function on startup
@@ -271,5 +338,10 @@ app.config(function(ChartJsProvider) {
     // Configure all doughnut charts
     ChartJsProvider.setOptions('Doughnut', {
         animateScale: true
+    });
+    // Configure all doughnut charts
+    ChartJsProvider.setOptions('Line', {
+        animateScale: false,
+        animation : false
     });
 });

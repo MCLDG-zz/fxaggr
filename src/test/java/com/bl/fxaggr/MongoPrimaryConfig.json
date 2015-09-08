@@ -10,14 +10,14 @@ db.aggrconfig.insert({
         "scheme": "Primary Bid/Ask",
         "liquidityproviders": ["Deutsche Bank", "Citibank", "Bloomberg"],
         "primarybidask": {
-            "primarysecondarytertiaryproviders": ["Bloomberg", "Deutsche Bank", "Citibank"],
             "timeintervalbeforeswitchingms": 5000,
             "numberquotesbeforeswitchtoprevious": 3,
             "actionwhennomoreliquidityproviders": "Stay with current provider"
         },
         "bestbidask": {
             "timeintervalformatchingquotesms": 500,
-            "minimummatchingquotesrequired": 3
+            "minimummatchingquotesrequired": 3,
+            "actionwhenbestnotpossible": "Revert to Primary Bid/Ask"
         },
         "filteringrules": {
             "numberconsecutivespikesfiltered": 3
@@ -27,30 +27,22 @@ db.aggrconfig.insert({
         "symbol": "USDCAD",
         "pctLeewayAllowedSpread": 2.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 5.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 5.5
     }, {
         "symbol": "EURNZD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
     }, {
         "symbol": "AUDCAD",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
     }, {
         "symbol": "USDGBP",
         "pctLeewayAllowedSpread": 3.0,
         "pctLeewayToPreviousBid": 10.0,
-        "pctLeewayToPreviousAsk": 1.5,
-        "pctAboveMaxSpread": 5.0,
-        "pctBelowMinSpread": 2.0
+        "pctLeewayToPreviousAsk": 1.5
     }]
 })
 

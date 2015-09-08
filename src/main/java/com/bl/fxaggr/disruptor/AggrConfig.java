@@ -17,7 +17,6 @@ public static class globalconfig {
     public  filteringrules filteringrules;
 }
 public static class primarybidask {
-    public  String[] primarysecondarytertiaryproviders;
     public  long timeintervalbeforeswitchingms;
     public  long numberquotesbeforeswitchtoprevious;
     public  String actionwhennomoreliquidityproviders;
@@ -25,6 +24,7 @@ public static class primarybidask {
 public static class bestbidask {
     public  long timeintervalformatchingquotesms;
     public  long minimummatchingquotesrequired;
+    public  String actionwhenbestnotpossible;
 }
 public static class filteringrules {
     public  long numberconsecutivespikesfiltered;
@@ -34,7 +34,5 @@ public static class AggrConfigCurrency {
     public  double pctLeewayAllowedSpread;
     public  double pctLeewayToPreviousBid;
     public  double pctLeewayToPreviousAsk;
-    public  double pctAboveMaxSpread;
-    public  double pctBelowMinSpread;
 }
 }

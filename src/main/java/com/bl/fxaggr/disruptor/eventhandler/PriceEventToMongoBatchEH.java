@@ -75,6 +75,9 @@ public class PriceEventToMongoBatchEH implements EventHandler<PriceEvent> {
 		//Convert the event to a Mongo document
     	String eventJson = gson.toJson(event);
 		events.add(new Document("finalpricequote", Document.parse(eventJson)));
+		if (sequence % 1000 == 0) {
+			System.out.println("PriceEventToMongoBatchEH - persisting event number: " + sequence);
+		}
 	}
 	private void persistEvents() {
 		if (events.size() > 0) {

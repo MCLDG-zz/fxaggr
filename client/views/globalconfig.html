@@ -8,24 +8,19 @@
 
 <form class="form-horizontal" role="form" ng-submit="saveGlobalConfig()" name="globalConfigForm">
     <div class="form-group has-feedback">
-        <table class="table table-striped table-bordered table table-condensed table-responsive">
+        <table class="table table-condensed table-bordered table-responsive table-hover">
             <thead>
                 <tr>
-                    <th colspan="2">Global Config</th>
+                    <th colspan="2" class="text-center bg-primary">Global Config</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>Accept after # Consecutive Spikes</td>
-                    <td>
-                        <input type="number" required min="0" class="form-control" id="numberconsecutivespikesfiltered" name="numberconsecutivespikesfiltered" ng-model="aggrconfig.globalconfig.numberconsecutivespikesfiltered">
-                    </td>
+                    <td colspan="2" class="text-center bg-info">Liquidity Providers</th>
                 </tr>
                 <tr>
-                    <td>Liquidity Providers</td>
-                    <td>
-
-                        <table class="table table-condensed table-responsive table-hover">
+                    <td colspan="2">
+                        <table class="table table-condensed table-bordered table-responsive table-hover">
                             <thead>
                                 <tr>
                                     <th colspan="1">Provider</th>
@@ -33,7 +28,7 @@
                                     <th colspan="1"></th>
                                 </tr>
                             </thead>
-                            <tbody data-ng-repeat='item in aggrconfig.globalconfig.liquidityproviders' class="list">
+                            <tbody data-ng-repeat='item in aggrconfig.globalconfig.liquidityproviders' class="list" ng-class="{'highlightSelectedRow':$index == selectedLiquidityProvider}">
                                 <tr ng-click="selectLiquidityProvider($index)">
                                     <td class="span2">{{item}}</td>
                                     <td class="span2">{{$index}}</td>
@@ -46,33 +41,126 @@
                             </tbody>
                         </table>
 
-                        <a href class="btn btn-danger btn-xs" ng-click="moveLiquidityProvider('up')" title="Move Up">
-                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                        <a href class="btn btn-danger btn-xs" ng-click="moveLiquidityProvider('down')" title="Move Down">
-                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-
                         <div class="input-group">
+                            <div class="btn-toolbar">
+                                <a href class="btn btn-primary" ng-click="moveLiquidityProvider('up')" title="Move Up">
+                                    <span class="fa fa-arrow-up"></span>
+                                </a>
+                                <a href class="btn btn-primary" ng-click="moveLiquidityProvider('down')" title="Move Down">
+                                    <span class="fa fa-arrow-down"></span>
+                                </a>
+                            </div>
                             <span class="input-group-btn">
-                                <a href class="btn btn-success InputAddOn-item" ng-click="addLiquidityProvider()">Add Provider</a>
+                                    <a href class="btn btn-success InputAddOn-item" ng-click="addLiquidityProvider()">Add Provider</a>
                             </span>
                             <input type="text" class="InputAddOn-field form-control" ng-model="lp.newProvider" placeholder="Add Liquidity Provider">
                         </div>
                     </td>
                 </tr>
                 <tr>
-                    <td>Primary Liquidity Provider</td>
-                    <td>
-                        <select ng-model="aggrconfig.globalconfig.primaryliquidityprovider" class="form-control" name="primaryLiquidityProvider" ng-options="i for i in aggrconfig.globalconfig.liquidityproviders">
-                    </td>
+                    <td colspan="2" class="text-center bg-info">Pricing Scheme</td>
                 </tr>
                 <tr>
-                    <td>Price Selection Scheme</td>
+                    <td>Price Selection Scheme
+                        <p class="small text-muted">Select the pricing scheme that should be used</p>
+                    </td>
                     <td>
                         <select ng-model="aggrconfig.globalconfig.scheme" class="form-control" name="scheme" ng-options="i for i in aggrconfig.globalconfig.availableschemes">
                     </td>
                 </tr>
+                <tr>
+                    <td colspan="2" class="text-center bg-info">Global Filtering Parameters</td>
+                </tr>
+                <tr>
+                    <td>Accept After # Consecutive Spikes
+                        <p class="small text-muted">After the # of consecutive spikes, accept the spike as the new trend</p>
+                    </td>
+                    
+                    <td>
+                        <input type="number" required min="0" class="form-control" id="numberconsecutivespikesfiltered" name="numberconsecutivespikesfiltered" ng-model="aggrconfig.globalconfig.filteringrules.numberconsecutivespikesfiltered">
+                    </td>
+                </tr>
             </tbody>
         </table>
+
+        <!-- Show the config for Primary Bid/Ask -->
+        <table class="table table-striped table-bordered table table-condensed table-responsive">
+            <thead>
+                <tr ng-click="showPrimaryBidAsk = !showPrimaryBidAsk">
+                    <th colspan="2" class="text-center bg-info">
+                        Primary Bid/Ask
+                        <span class="fa fa-chevron-down" aria-hidden="true" ng-if="showPrimaryBidAsk"></span>
+                        <span class="fa fa-chevron-right" aria-hidden="true" ng-if="!showPrimaryBidAsk"></span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="list" ng-if="showPrimaryBidAsk">
+                <tr>
+                    <td>Time Interval Before Switching (ms)
+                        <p class="small text-muted">If no price quotes arrive from the primary LP within this time period, switch to next primary LP</p>
+                    </td>
+                    <td>
+                        <input type="number" required min="0" ng-model="aggrconfig.globalconfig.primarybidask.timeintervalbeforeswitchingms" class="form-control" name="timeintervalbeforeswitchingms">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Number Quotes Before Switching Back
+                        <p class="small text-muted">Switch back to previous primary LP is this number of quotes arrive from the previous primary LP</p>
+                    </td>
+                    <td>
+                        <input type="number" required min="0" ng-model="aggrconfig.globalconfig.primarybidask.numberquotesbeforeswitchtoprevious" class="form-control" name="numberquotesbeforeswitchtoprevious">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Action When No More LPs
+                        <p class="small text-muted">Action to take when I try to switch to next primary LP and there no more LPs available</p>
+                    </td>
+                    <td>
+                        <input type="text" required ng-model="aggrconfig.globalconfig.primarybidask.actionwhennomoreliquidityproviders" class="form-control" name="actionwhennomoreliquidityproviders">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Show the config for Best Bid/Ask -->
+        <table class="table table-striped table-bordered table table-condensed table-responsive">
+            <thead>
+                <tr ng-click="showBestBidAsk = !showBestBidAsk">
+                    <th colspan="2" class="text-center bg-info">
+                        Best Bid/Ask
+                        <span class="fa fa-chevron-down" aria-hidden="true" ng-if="showBestBidAsk"></span>
+                        <span class="fa fa-chevron-right" aria-hidden="true" ng-if="!showBestBidAsk"></span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="list" ng-if="showBestBidAsk">
+                <tr>
+                    <td>Time Interval for Matching Quotes (ms)
+                        <p class="small text-muted">Price quotes from LPs must arrive within this time interval, otherwise consider them stale</p>
+                    </td>
+                    <td>
+                        <input type="number" required min="0" ng-model="aggrconfig.globalconfig.bestbidask.timeintervalformatchingquotesms" class="form-control" name="timeintervalbeforeswitchingms">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Minimum Matching Quotes Required
+                        <p class="small text-muted">Construct best bid/ask only if I have quotes from this number of LPs</p>
+                    </td>
+                    <td>
+                        <input type="number" required min="0" ng-model="aggrconfig.globalconfig.bestbidask.minimummatchingquotesrequired" class="form-control" name="numberquotesbeforeswitchtoprevious">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Action When Best Not Possible
+                        <p class="small text-muted">Action to take if I cannot construct a best bid/ask</p>
+                    </td>
+                    <td>
+                        <input type="text" required ng-model="aggrconfig.globalconfig.bestbidask.actionwhenbestnotpossible" class="form-control" name="actionwhennomoreliquidityproviders">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
         <div>
             <button type="submit" class="btn btn-primary" ng-disabled="globalConfigForm.$invalid">Update</button>
             <button type="button" ng-click="loadAggrConfig()" class="btn">Cancel</button>

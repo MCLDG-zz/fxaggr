@@ -6,23 +6,26 @@
     </div>
 </div>
 
-<table class="table table-condensed table-responsive table-hover">
+<table class="table table-condensed table-bordered table-responsive table-hover">
     <thead>
+        <tr>
+            <th colspan="5" class="text-center bg-primary">Currency Config</th>
+        </tr>
         <tr>
             <th colspan="1">Symbol</th>
             <th colspan="1">Difference to Avg Spread Pct</th>
             <th colspan="1">Difference to Prev Bid Pct</th>
             <th colspan="1">Difference to Prev Ask Pct</th>
-            <th colspan="1">Pct Above Max Spread</th>
-            <th colspan="1">Pct Below Min Spread</th>
         </tr>
     </thead>
     <!-- This can be added to the tbody repeat below to create a highlight-on-click: ng-class="{'highlightSelectedRow':$index == selectedOrderRow}" -->
-    <tbody data-ng-repeat='item in aggrconfig.currencyconfig' class="list">
+    <tbody data-ng-repeat='item in aggrconfig.currencyconfig | orderBy: "symbol"' class="list">
         <tr>
             <td>
                 <span e-name="symbol" e-form="rowform" e-disabled>
                     {{ item.symbol || 'empty' }}
+                    <img ng-src="{{getFlagForFirstCurrency(item.symbol)}}">
+                    <img ng-src="{{getFlagForSecondCurrency(item.symbol)}}">
                 </span>
             </td>
             <td>
@@ -38,16 +41,6 @@
             <td>
                 <span editable-number="item.pctLeewayToPreviousAsk" e-name="pctLeewayToPreviousAsk" e-form="rowform" e-min="0" e-required>
                     {{ item.pctLeewayToPreviousAsk || 'empty' }}
-                </span>
-            </td>
-            <td>
-                <span editable-number="item.pctAboveMaxSpread" e-name="pctAboveMaxSpread" e-form="rowform" e-min="0" e-required>
-                    {{ item.pctAboveMaxSpread || 'empty' }}
-                </span>
-            </td>
-            <td>
-                <span editable-number="item.pctBelowMinSpread" e-name="pctBelowMinSpread" e-form="rowform" e-min="0" e-required>
-                    {{ item.pctBelowMinSpread || 'empty' }}
                 </span>
             </td>
             <td style="white-space: nowrap">

@@ -15,6 +15,7 @@ var xml2js = require('xml2js');
 var routes = require('./routes/index');
 var config = require('./routes/config');
 var fxaggr = require('./routes/fxaggr');
+var referencedata = require('./routes/ref');
 
 var app = express();
 var server = http.createServer(app);
@@ -42,6 +43,7 @@ app.use(function(req, res, next) {
 app.use('/', routes);
 app.use('/config', config);
 app.use('/fxaggr', fxaggr);
+app.use('/ref', referencedata);
 
 /// catch 404 and forwarding to error handler
 app.use(function(req, res, next) {
