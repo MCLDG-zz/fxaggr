@@ -15,9 +15,6 @@ import com.lmax.disruptor.EventHandler;
 public class StatsEH implements EventHandler<PriceEvent> {
 	
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
-		if (sequence % 1000 == 0) {
-			System.out.println("StatsEH - persisting event number: " + sequence);
-		}
 		StatsManager.eventReceived(event);
 	}
 }

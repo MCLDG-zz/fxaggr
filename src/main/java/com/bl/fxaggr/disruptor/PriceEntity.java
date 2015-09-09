@@ -1,7 +1,7 @@
 package com.bl.fxaggr.disruptor;
 
-import java.time.LocalDateTime;
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 public class PriceEntity {
 
@@ -14,7 +14,7 @@ public class PriceEntity {
     private double bid;
     private double ask;
     private double spread;
-    private LocalDateTime datetime;
+    private LocalDateTime quoteTimestamp;
     private Instant processedTimestamp;
 
 /*    public PriceEntity(long sequence, String symbol, double open, double close, double bid, double ask, LocalDateTime datetime) {
@@ -56,8 +56,8 @@ public class PriceEntity {
     public void setSpread(double spread) {
         this.spread = spread;
     }
-    public void setDatetime(LocalDateTime datetime) {
-        this.datetime = datetime;
+    public void setQuoteTimestamp(LocalDateTime quoteTimestamp) {
+        this.quoteTimestamp = quoteTimestamp;
     }
     public void setProcessedTimestamp(Instant processedTimestamp) {
         this.processedTimestamp = processedTimestamp;
@@ -86,8 +86,8 @@ public class PriceEntity {
     public double getSpread() {
         return this.spread;
     }
-    public LocalDateTime getDatetime() {
-        return this.datetime;
+    public LocalDateTime getQuoteTimestamp() {
+        return this.quoteTimestamp;
     }
     public Instant getProcessedTimestamp() {
         return this.processedTimestamp;

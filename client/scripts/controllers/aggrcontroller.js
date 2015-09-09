@@ -7,8 +7,7 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
 
         $scope.outliers = [];
         $scope.aggrconfig = [];
-        $scope.pricestats = [];
-        $scope.runtimestats = [];
+        $scope.pricestats = [];$scope.runtimestats = [];
         $scope.liquidityProviders = [];
         $scope.liquidityProvider;
         $scope.countryToCurrencyMap = null;
@@ -23,6 +22,8 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
         $scope.totalNumberConfiguredBestBidAskEvents;
         $scope.totalNumberAppliedBestBidAskEvents;
         $scope.totalNumberAppliedPrimaryBidAskEvents;
+        $scope.charteventspersecond = [];
+        $scope.eventspersecond = [];
         $scope.chartavgprocessingtime = [];
         $scope.avgprocessingtime = [];
         $scope.avgprocessingtimelabels = [1,2,3,4,5,6,7,8,9,10];
@@ -75,6 +76,9 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
                     $scope.currencyfilteredevents.push(data[i].totalNumberOfFilteredEvents);
                 }
                 else {
+                    $scope.eventspersecond.push(data[i].eventsPerSecond);
+                    $scope.eventspersecond.splice(0, $scope.eventspersecond.length - 10);
+                    $scope.charteventspersecond[0] = $scope.eventspersecond;
                     $scope.avgprocessingtime.push(data[i].avgProcessingTime);
                     $scope.avgprocessingtime.splice(0, $scope.avgprocessingtime.length - 10);
                     $scope.chartavgprocessingtime[0] = $scope.avgprocessingtime;
@@ -160,7 +164,24 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
                 }
             }
             if (!configFound) {
-                return "could not update AggrConfig - id not found: " + id;
+                return "could not update Currency Config - currency not found: " + symbol;
+            }
+            return $http.post('/config/updateaggrconfig', $scope.aggrconfig);
+        };
+
+        $scope.saveProviderConfig = function(data, providername) {
+            //Update $scope.aggrconfig 
+            var configFound = false;
+            var i = 0;
+            for (i = 0; i < $scope.aggrconfig.providerconfig.length; i++) {
+                if ($scope.aggrconfig.providerconfig[i].providername == providername) {
+                    configFound = true;
+                    angular.extend($scope.aggrconfig.providerconfig[i], data);
+                    break;
+                }
+            }
+            if (!configFound) {
+                return "could not update Provider Config - providername not found: " + providername;
             }
             return $http.post('/config/updateaggrconfig', $scope.aggrconfig);
         };
@@ -339,7 +360,7 @@ app.config(function(ChartJsProvider) {
     ChartJsProvider.setOptions('Doughnut', {
         animateScale: true
     });
-    // Configure all doughnut charts
+    // Configure all line charts
     ChartJsProvider.setOptions('Line', {
         animateScale: false,
         animation : false

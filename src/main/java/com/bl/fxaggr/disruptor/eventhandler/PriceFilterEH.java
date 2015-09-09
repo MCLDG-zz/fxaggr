@@ -5,6 +5,8 @@ import com.bl.fxaggr.disruptor.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoField;
 import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
@@ -103,7 +105,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		}
 		
 		currency = priceEntity.getSymbol();
-		int hour = priceEntity.getDatetime().getHour();
+		int hour = priceEntity.getQuoteTimestamp().get(ChronoField.HOUR_OF_DAY);
 		priceStats = priceStatsMap.get(currency + hour);
 		aggrConfigCurrency = PriceEventHelper.aggrcurrencyconfigMap.get(currency);
 		previousPrice = previousPriceMap.get(currency);
@@ -240,7 +242,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 
 					//Update the previous price
 					previousPrice.symbol = currency;
-					previousPrice.datetime = priceEntity.getDatetime();
+					previousPrice.quoteTimestamp = priceEntity.getQuoteTimestamp();
 					previousPrice.ask = priceEntity.getAsk();
 					previousPrice.bid = priceEntity.getBid();
 					previousPrice.spread = spread;
@@ -248,7 +250,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 			} else {
 				previousPrice = new PreviousPrice();
 				previousPrice.symbol = currency;
-				previousPrice.datetime = priceEntity.getDatetime();
+				previousPrice.quoteTimestamp = priceEntity.getQuoteTimestamp();
 				previousPrice.ask = priceEntity.getAsk();
 				previousPrice.bid = priceEntity.getBid();
 				previousPrice.spread = spread;
@@ -323,7 +325,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	}
 	private class PreviousPrice {
 		public String symbol;
-		public LocalDateTime datetime;
+		public LocalDateTime quoteTimestamp;
 		public double ask;
 		public double bid;
 		public double spread;

@@ -3,14 +3,14 @@ var fxApp = angular.module('fxaggr');
 // Configure the navigation and routing - this uses ui-router
 fxApp.config(function($stateProvider, $urlRouterProvider) {
 
-    $urlRouterProvider.otherwise('/home');
+    $urlRouterProvider.otherwise('/dashboard');
 
     $stateProvider
 
     // HOME STATES AND NESTED VIEWS ========================================
     .state('home', {
-        url: '/home',
-        templateUrl: 'views/outliers.html'
+        url: '/dashboard',
+        templateUrl: 'views/dashboard.html'
     })
 
     .state('aggrconfig', {
@@ -26,6 +26,11 @@ fxApp.config(function($stateProvider, $urlRouterProvider) {
     .state('currencyconfig', {
         url: '/currencyconfig',
         templateUrl: 'views/currencyconfig.html'
+    })
+
+    .state('providerconfig', {
+        url: '/providerconfig',
+        templateUrl: 'views/providerconfig.html'
     })
 
     .state('pricestats', {

@@ -14,10 +14,12 @@ import java.time.Instant;
 
 import com.lmax.disruptor.EventHandler;
 
-import com.mongodb.MongoClient;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.MongoClient;
+import com.mongodb.async.client.MongoClients;
+import com.mongodb.async.client.MongoCollection;
+import com.mongodb.async.client.MongoDatabase;
 import com.mongodb.util.JSON;
-import com.mongodb.WriteConcern;
 import org.bson.Document;
 
 import com.google.gson.Gson;
@@ -25,7 +27,7 @@ import com.google.gson.Gson;
  * Persists the price quote event to Mongo. The current state of the price event will
  * determine which collection the price event is written to in Mongo.
  */
-public class PriceEventToMongoBatchEH implements EventHandler<PriceEvent> {
+public class PriceEventToMongoAsyncBatchEH implements EventHandler<PriceEvent> {
 	MongoDatabase db = null;
 	Gson gson = new Gson();
 	
@@ -34,7 +36,7 @@ public class PriceEventToMongoBatchEH implements EventHandler<PriceEvent> {
 	//thread safe. I will research a better way to do this in future
 	List<Document> events = Collections.synchronizedList(new ArrayList<>());
 
-	public PriceEventToMongoBatchEH() {
+	public PriceEventToMongoAsyncBatchEH() {
 		//Stop the logging to console
 		Logger mongoLogger = Logger.getLogger( "org.mongodb.driver" );
     	mongoLogger.setLevel(Level.SEVERE); 		
@@ -55,7 +57,7 @@ public class PriceEventToMongoBatchEH implements EventHandler<PriceEvent> {
 
     	MongoClient mongoClient = null;
 		try {
-			mongoClient = new MongoClient();
+			mongoClient = MongoClients.create();
 			//mongoClient.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
 		} 
 		catch (Exception e) {
@@ -80,10 +82,14 @@ public class PriceEventToMongoBatchEH implements EventHandler<PriceEvent> {
 		if (events.size() > 0) {
 	 		synchronized (events) {
 	 			Instant start = Instant.now();
-				db.getCollection("finalquotes").insertMany(events);
-				long ns = start.until(Instant.now(), ChronoUnit.NANOS);
-	 			System.out.println("PriceEventToMongoBatchEH - bulk insert. Inserting: " + events.size() + " events. Insert took: " + ns + " nanoseconds");
-				events.clear();
+				db.getCollection("finalquotes").insertMany(events, new SingleResultCallback<Void>() {
+				   @Override
+				   public void onResult(final Void result, final Throwable t) {
+						long ns = start.until(Instant.now(), ChronoUnit.NANOS);
+			 			System.out.println("PriceEventToMongoBatchEH - bulk insert. Inserting: " + events.size() + " events. Insert took: " + ns + " nanoseconds");
+						events.clear();
+				   }
+				});
 	  		}		
 		}
 	}

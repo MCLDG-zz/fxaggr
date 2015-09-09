@@ -312,7 +312,7 @@ public class PriceEventHelper {
         priceEntity.setClose(pe.getClose());
         priceEntity.setSymbol(pe.getSymbol());
         priceEntity.setLiquidityProvider(pe.getLiquidityProvider());
-        priceEntity.setDatetime(pe.getDatetime());
+        priceEntity.setQuoteTimestamp(pe.getQuoteTimestamp());
         priceEntity.setProcessedTimestamp(Instant.now());
         
         //Store the price entity in the tracking Map

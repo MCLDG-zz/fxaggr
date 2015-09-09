@@ -34,7 +34,7 @@ public class PriceEvent {
     public long recordNum = 0;
     
     //Store useful timing information
-    private LocalDateTime quoteInstant;   //timestamp of quote
+    private LocalDateTime quoteInstant;   //timestamp of quote - this is already stored in PRiceEntity so don't need this
     private Instant filterInstant;  //time event was processed by filter event handler
     private Instant bidAskInstant;  //time event was processed by bid/ask event handler
     private Instant sentToConsumerInstant; //time event was send to consumer

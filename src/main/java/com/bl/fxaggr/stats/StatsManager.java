@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.ChronoField;
 import java.time.Instant;
 
 
@@ -39,6 +40,9 @@ public class StatsManager {
 	private static MongoDatabase db = null;
 	private static BsonValue overallStatsID;
 	private static BsonValue symbolStatsID;
+	private static long eventsPerPreviousSecond = 0;
+	private static long eventsPerCurrentSecond = 0;
+	private static long currentSecond;
     
     /*
     * Setup the timer to persist the stats at regular intervals
@@ -83,6 +87,39 @@ public class StatsManager {
         //Update event counters/stats
         overallStats.totalNumberOfEvents++;
         symbolStat.totalNumberOfEvents++;
+        
+        //update events per second. Doesn't make sense to capture this per currency
+        if (Instant.now().getLong(ChronoField.INSTANT_SECONDS) == currentSecond) {
+            eventsPerCurrentSecond++;
+        }
+        else {
+            currentSecond = Instant.now().getLong(ChronoField.INSTANT_SECONDS);
+            overallStats.eventsPerSecond = eventsPerCurrentSecond;
+            eventsPerCurrentSecond = 0;
+        }
+        
+        if (event.getFilterInstant() == null || event.getPriceEntity().getQuoteTimestamp() == null) {
+            System.out.println("StatsManager - event does not contain processing time. event.getFilterInstant() : " + event.getFilterInstant() 
+                + " event.getPriceEntity().getQuoteTimestamp(): " + event.getPriceEntity().getQuoteTimestamp());
+        }
+        else {
+            long diffTimeNS = event.getPriceEntity().getProcessedTimestamp().until(event.getFilterInstant(), ChronoUnit.NANOS);
+            overallStats.avgTimeBetweenQuoteAndProcessStartTime = (overallStats.avgTimeBetweenQuoteAndProcessStartTime + diffTimeNS) / overallStats.totalNumberOfEvents;
+            if (diffTimeNS > overallStats.maxTimeBetweenQuoteAndProcessStartTime) {
+                overallStats.maxTimeBetweenQuoteAndProcessStartTime = diffTimeNS;
+            }
+            if (diffTimeNS < overallStats.minTimeBetweenQuoteAndProcessStartTime) {
+                overallStats.minTimeBetweenQuoteAndProcessStartTime = diffTimeNS;
+            }
+            symbolStat.avgTimeBetweenQuoteAndProcessStartTime = (symbolStat.avgTimeBetweenQuoteAndProcessStartTime + diffTimeNS) / symbolStat.totalNumberOfEvents;
+            if (diffTimeNS > symbolStat.maxTimeBetweenQuoteAndProcessStartTime) {
+                symbolStat.maxTimeBetweenQuoteAndProcessStartTime = diffTimeNS;
+            }
+            if (diffTimeNS < symbolStat.minTimeBetweenQuoteAndProcessStartTime) {
+                symbolStat.minTimeBetweenQuoteAndProcessStartTime = diffTimeNS;
+            }
+        }
+
         if (event.getFilterInstant() == null || event.getSentToConsumerInstant() == null) {
             System.out.println("StatsManager - event does not contain processing time. event.getFilterInstant() : " + event.getFilterInstant()
                 + " event.getSentToConsumerInstant() : " + event.getSentToConsumerInstant());

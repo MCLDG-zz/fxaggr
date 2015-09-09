@@ -49,6 +49,7 @@ public class PriceEventMain extends Thread {
         EventHandler < PriceEvent > eh20 = new StatsEH();
         EventHandler < PriceEvent > eh30 = new PriceEventToMongoEH();
         EventHandler < PriceEvent > eh31 = new PriceEventToMongoBatchEH();
+        EventHandler < PriceEvent > eh32 = new PriceEventToMongoAsyncBatchEH();
 
         /******************************************************************************************
          * BIG WARNING

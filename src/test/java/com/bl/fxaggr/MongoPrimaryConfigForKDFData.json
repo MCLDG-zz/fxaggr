@@ -23,6 +23,21 @@ db.aggrconfig.insert({
             "numberconsecutivespikesfiltered": 3
         }
     },
+    "providerconfig": [{
+        "providername": "HKD-DB",
+        "serverIP": "192.168.9.51",
+        "serverPort": 22250,
+        "username": "db-login",
+        "password": "db-password"
+        
+    }, {
+        "providername": "Saxo HK",
+        "serverIP": "192.168.9.11",
+        "serverPort": 21250,
+        "username": "saxo-login",
+        "password": "saxo-password"
+        
+    }],
     "currencyconfig": [{
         "symbol": "USDCAD",
         "pctLeewayAllowedSpread": 2.0,
