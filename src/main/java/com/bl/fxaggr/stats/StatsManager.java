@@ -8,6 +8,7 @@ import java.util.TimerTask;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.ChronoField;
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 
 import com.mongodb.client.MongoDatabase;
@@ -88,6 +89,11 @@ public class StatsManager {
         overallStats.totalNumberOfEvents++;
         symbolStat.totalNumberOfEvents++;
         
+        //update the delay in publishing the event to the Disruptor Ringbuffer
+        if (event.getPublishToRingBufferDelay() > 0) {
+            overallStats.publishToRingBufferDelay = event.getPublishToRingBufferDelay();
+            overallStats.publishToRingBufferDelayTS = LocalDateTime.now();
+        }
         //update events per second. Doesn't make sense to capture this per currency
         if (Instant.now().getLong(ChronoField.INSTANT_SECONDS) == currentSecond) {
             eventsPerCurrentSecond++;

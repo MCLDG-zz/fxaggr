@@ -39,6 +39,7 @@ public class PriceEvent {
     private Instant bidAskInstant;  //time event was processed by bid/ask event handler
     private Instant sentToConsumerInstant; //time event was send to consumer
     private Instant persistInstant; //time event was persisted
+    private long publishToRingBufferDelay;
     
     /**
      * Events are reused by the disruptor. A reused event will still hold the state
@@ -167,6 +168,9 @@ public class PriceEvent {
     public void setSentToConsumerInstant() {
         this.sentToConsumerInstant = Instant.now();
     }
+    public void setPublishToRingBufferDelay(long publishToRingBufferDelay) {
+        this.publishToRingBufferDelay = publishToRingBufferDelay;
+    }
     public LocalDateTime getQuoteInstant() {
         return this.quoteInstant;
     }
@@ -181,5 +185,8 @@ public class PriceEvent {
     }
     public Instant getSentToConsumerInstant() {
         return this.sentToConsumerInstant;
+    }
+    public long getPublishToRingBufferDelay() {
+        return this.publishToRingBufferDelay;
     }
 }

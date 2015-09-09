@@ -51,14 +51,17 @@ public class PriceEventGenerator implements Runnable {
                     cnt++;
                     String[] tokens = line.split(",");
                     
-	 			Instant start = Instant.now();
-
+                    //Track the time taken to get the next slot in the RingBuffer. If there
+                    //are no slots the producer will wait - and this is undesirable, since
+                    //it means processing of the quote will be delayed
+	 			    Instant start = Instant.now();
                     long sequence = ringBuffer.next();
                     PriceEvent priceEvent = ringBuffer.get(sequence);
-				long ns = start.until(Instant.now(), ChronoUnit.NANOS);
-				if (ns > 500000000) {
-    	 			System.out.println("PriceEventGenerator - delay getting next ringbuffer entry for sequence: " + sequence + ". NS: " + ns);
-				}
+                    long ns = start.until(Instant.now(), ChronoUnit.NANOS);
+				    priceEvent.setPublishToRingBufferDelay(ns);
+    				if (ns > 500000000) {
+        	 			System.out.println("PriceEventGenerator - delay getting next ringbuffer entry for sequence: " + sequence + ". NS: " + ns);
+    				}
                     //Reset the state of the event. Since the events on the ringbuffer 
                     //are reused, processing by event handlers will leave the event
                     //in a specific state that must be reset before reusing the event
@@ -79,12 +82,7 @@ public class PriceEventGenerator implements Runnable {
                     priceEvent.getPriceEntity().setLiquidityProvider(tokens[3]);
                     priceEvent.getPriceEntity().setSymbol(tokens[4]);
                     priceEvent.recordNum = cnt; // for debugging purposes only
-	 			 start = Instant.now();
                     ringBuffer.publish(sequence);
-				ns = start.until(Instant.now(), ChronoUnit.NANOS);
-				if (ns > 500000000) {
-    	 			System.out.println("PriceEventGenerator - delay publishing event sequence: " + sequence + ". NS: " + ns + ". Ringbuffer remaining capacity: " + ringBuffer.remainingCapacity());
-				}
                     // System.out.println("Data producer - published sequence: " + sequence + " bid: " 
                     //     + priceEvent.getPriceEntity().getBid() + " ask: " + priceEvent.getPriceEntity().getAsk()
                     //     + " spread: " + (priceEvent.getPriceEntity().getAsk() - priceEvent.getPriceEntity().getBid()));  

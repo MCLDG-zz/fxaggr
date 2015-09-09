@@ -22,6 +22,9 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
         $scope.totalNumberConfiguredBestBidAskEvents;
         $scope.totalNumberAppliedBestBidAskEvents;
         $scope.totalNumberAppliedPrimaryBidAskEvents;
+        $scope.chartdelayprocessingquote = [];
+        $scope.delayprocessingquote = [];
+        $scope.delayprocessingquotelabels = [];
         $scope.charteventspersecond = [];
         $scope.eventspersecond = [];
         $scope.chartavgprocessingtime = [];
@@ -76,6 +79,9 @@ app.controller('fxaggrCtrl', ['$scope', '$timeout', '$http', '$state',
                     $scope.currencyfilteredevents.push(data[i].totalNumberOfFilteredEvents);
                 }
                 else {
+                    $scope.delayprocessingquote.push(data[i].publishToRingBufferDelay);
+                    $scope.delayprocessingquote.splice(0, $scope.delayprocessingquote.length - 10);
+                    $scope.chartdelayprocessingquote[0] = $scope.delayprocessingquote;
                     $scope.eventspersecond.push(data[i].eventsPerSecond);
                     $scope.eventspersecond.splice(0, $scope.eventspersecond.length - 10);
                     $scope.charteventspersecond[0] = $scope.eventspersecond;
