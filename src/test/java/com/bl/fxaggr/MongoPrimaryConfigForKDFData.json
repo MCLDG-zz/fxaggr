@@ -6,7 +6,7 @@ db.finalquotes.drop()
 
 db.aggrconfig.insert({
     "globalconfig": {
-        "availableschemes": ["Primary Bid/Ask", "Best Bid/Ask"],
+        "availableschemes": ["Primary Bid/Ask", "Best Bid/Ask", "Smoothing"],
         "scheme": "Best Bid/Ask",
         "liquidityproviders": ["HKD-DB", "HK-Saxo F", "CXSymbol"],
         "primarybidask": {
@@ -21,6 +21,9 @@ db.aggrconfig.insert({
         },
         "filteringrules": {
             "numberconsecutivespikesfiltered": 3
+        },
+        "smoothing": {
+            "ewmaperiods": 10
         }
     },
     "providerconfig": [{

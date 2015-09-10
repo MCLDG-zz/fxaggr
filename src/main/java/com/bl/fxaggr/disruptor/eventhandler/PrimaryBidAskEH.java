@@ -3,6 +3,8 @@ package com.bl.fxaggr.disruptor.eventhandler;
 import com.bl.fxaggr.disruptor.*;
 
 import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayDeque;
 
 import com.lmax.disruptor.EventHandler;
 
@@ -25,8 +27,17 @@ import com.lmax.disruptor.EventHandler;
 public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 	
 	private Map<String, AggrConfig.AggrConfigCurrency> aggrcurrencyconfigMap = null;
+	private Map<String, ArrayDeque<Double>> currencyEWMAMap = new HashMap<>();
+	private int EWMAPeriods = 0;
+	private EWMA ewma = null;
 	private PriceEntity priceEntity;
 
+	public PrimaryBidAskEH() {
+		EWMAPeriods = PriceEventHelper.getEWMAPeriods();
+		ewma = new EWMA(EWMAPeriods);
+		System.out.println("PrimaryBidAskEH - EWMA defaulting to " + EWMAPeriods + " periods"); 
+	}
+	
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
 		//Store the latest price quote
 		priceEntity = event.getPriceEntity();
@@ -77,6 +88,19 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 					if (!this.handlePrimaryBidAskScheme(event)) {
 						event.setEventStatus(PriceEvent.EventStatus.FILTERED);
 						event.addFilteredReason(PriceEvent.FilterReason.NO_BEST_BIDASK_NOT_PRIMARY);
+					}
+				}
+				break;
+			/**
+			 * We try to process the price quote based on a smoothing algorithm using EWMA.
+			 * If this is not possible (for instance, where we do not have up-to-date quotes 
+			 * from a sufficient number of LPs), we process the quote based on the primary bid/ask.
+			 */
+			case "Smoothing": 
+				if (!this.handleSmoothingScheme(event)) {
+					if (!this.handlePrimaryBidAskScheme(event)) {
+						event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+						event.addFilteredReason(PriceEvent.FilterReason.NO_SMOOTHING_NOT_PRIMARY);
 					}
 				}
 				break;
@@ -215,6 +239,58 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		//Assume a best bid/ask has been created
 		event.setAppliedSelectionScheme(PriceEvent.AppliedSelectionScheme.BEST_BID_ASK);
 		event.setBestBidAsk(bestBidAsk);
+		return true;
+	}
+	/**
+	 * Handle this price event based on the Smoothing scheme. In this scheme
+	 * the bid/ask is smoothed based on an EWMA (Exponentially Weighted Moving
+	 * Average).
+	 * 
+	 * <p>
+	 * For an EWMA to be created there must be a sufficient number of price quotes
+	 * to create the moving average. For instance, a 20-MA (20-moving-average) requires
+	 * 20 price quotes to create a moving average.
+	 * 
+	 * @return	A boolean indicating whether a smoothing price quote could be
+	 * 			created and may therefore be sent to the consumer
+     *  		<code>true</code> a smoothing price quote could be
+	 * 			created and may therefore be sent to the consumer
+	 * 			<code>false</code> a smoothing price quote could not be
+	 * 			created and may therefore not be sent to the consumer
+	 */
+	private boolean handleSmoothingScheme(PriceEvent event) {
+		String symbol = priceEntity.getSymbol();
+		ArrayDeque<Double> pricesForCurrency;
+		double bestBid = 0;
+		double bestAsk = 0;
+		
+		/*
+		* Get the historical prices for this currency
+		*/
+		if (currencyEWMAMap.containsKey(symbol)) {
+			pricesForCurrency = currencyEWMAMap.get(symbol);
+		}
+		else {
+			pricesForCurrency = new ArrayDeque();
+			currencyEWMAMap.put(symbol, pricesForCurrency);
+		}
+		//Push the new price onto the front of the queue, and remove the last
+		//item (if present)
+		pricesForCurrency.offerFirst(event.getPriceEntity().getBid());
+		if (pricesForCurrency.size() > EWMAPeriods) {
+			pricesForCurrency.pollLast();
+		}
+
+		//Calculate the EWMA		
+		Double[] prices = pricesForCurrency.toArray(new Double[pricesForCurrency.size()]);
+		double calculatedEWMA = ewma.calculate(prices);
+		if (calculatedEWMA == 0) {
+			return false;
+		}
+		
+		//Assume a best bid/ask has been created
+		event.setAppliedSelectionScheme(PriceEvent.AppliedSelectionScheme.SMOOTHING);
+		//event.setBestBidAsk(bestBidAsk);
 		return true;
 	}
 }

@@ -44,23 +44,26 @@ public class StatsManager {
 	private static long eventsPerPreviousSecond = 0;
 	private static long eventsPerCurrentSecond = 0;
 	private static long currentSecond;
+	private static int eventCounter = 0;
+
+	private static final int BATCH_SIZE = 50000;
     
     /*
     * Setup the timer to persist the stats at regular intervals
     */
     static {
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                persistStats();
-            }
-        };
+        // TimerTask task = new TimerTask() {
+        //     @Override
+        //     public void run() {
+        //         persistStats();
+        //     }
+        // };
     
-        Timer timer = new Timer();
-        long delay = 5000;
-        long interval= 1 * 5000; 
+        // Timer timer = new Timer();
+        // long delay = 5000;
+        // long interval= 1 * 5000; 
     
-        timer.scheduleAtFixedRate(task, delay, interval);
+        // timer.scheduleAtFixedRate(task, delay, interval);
         
 		MongoClient mongoClient = null;
 		try {
@@ -77,7 +80,7 @@ public class StatsManager {
 		overallStatsID = new BsonString("1");
     }
 
-    public static void eventReceived(PriceEvent event) {
+    public static void eventReceived(PriceEvent event, boolean endOfBatch) {
         //Get the stats for the current symbol. Create it if it doesn't exist
         EventStats symbolStat = symbolStats.get(event.getPriceEntity().getSymbol());
         if (symbolStat == null) {
@@ -90,7 +93,8 @@ public class StatsManager {
         symbolStat.totalNumberOfEvents++;
         
         //update the delay in publishing the event to the Disruptor Ringbuffer
-        if (event.getPublishToRingBufferDelay() > 0) {
+        if (event.getPublishToRingBufferDelay() > 100) {
+ 			System.out.println("StatsManager - publish stats for delay getting next ringbuffer entry. MS delay: " + event.getPublishToRingBufferDelay());
             overallStats.publishToRingBufferDelay = event.getPublishToRingBufferDelay();
             overallStats.publishToRingBufferDelayTS = LocalDateTime.now();
         }
@@ -217,10 +221,14 @@ public class StatsManager {
                 symbolStat.totalNumberAppliedPrimaryBidAskEvents++;
             }
         }
-    }
-    public static void resetStats() {
-        symbolStats.clear();
-        overallStats = new EventStats();
+        eventCounter++;
+        if (eventCounter > BATCH_SIZE) {
+	 			    Instant start = Instant.now();
+            persistStats();
+                    long ns = start.until(Instant.now(), ChronoUnit.MILLIS);
+    	 			System.out.println("StatsManager - persisting stats for " + eventCounter + " events. MS to persist: " + ns);
+            eventCounter = 0;
+        }
     }
     private static void persistStats() {
     	//Convert the stats to JSON and write to DB

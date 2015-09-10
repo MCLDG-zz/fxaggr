@@ -15,6 +15,7 @@ public static class globalconfig {
     public  primarybidask primarybidask;
     public  bestbidask bestbidask;
     public  filteringrules filteringrules;
+    public  smoothing smoothing;
 }
 public static class primarybidask {
     public  long timeintervalbeforeswitchingms;
@@ -25,6 +26,9 @@ public static class bestbidask {
     public  long timeintervalformatchingquotesms;
     public  long minimummatchingquotesrequired;
     public  String actionwhenbestnotpossible;
+}
+public static class smoothing {
+    public  int ewmaperiods;
 }
 public static class filteringrules {
     public  long numberconsecutivespikesfiltered;

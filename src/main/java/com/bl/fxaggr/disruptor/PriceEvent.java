@@ -64,7 +64,8 @@ public class PriceEvent {
 		ASK_SPIKE,
 		BID_SPIKE,
 		NOT_PRIMARY,
-		NO_BEST_BIDASK_NOT_PRIMARY
+		NO_BEST_BIDASK_NOT_PRIMARY,
+		NO_SMOOTHING_NOT_PRIMARY
 	}
     
     public enum EventStatus {
@@ -88,7 +89,8 @@ public class PriceEvent {
     public enum AppliedSelectionScheme {
         NONE,
 		PRIMARY_BID_ASK,
-		BEST_BID_ASK
+		BEST_BID_ASK,
+		SMOOTHING
 	}
     
     public void setPriceEntity(PriceEntity priceEntity) {

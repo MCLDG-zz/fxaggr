@@ -57,10 +57,10 @@ public class PriceEventGenerator implements Runnable {
 	 			    Instant start = Instant.now();
                     long sequence = ringBuffer.next();
                     PriceEvent priceEvent = ringBuffer.get(sequence);
-                    long ns = start.until(Instant.now(), ChronoUnit.NANOS);
+                    long ns = start.until(Instant.now(), ChronoUnit.MILLIS);
 				    priceEvent.setPublishToRingBufferDelay(ns);
-    				if (ns > 500000000) {
-        	 			System.out.println("PriceEventGenerator - delay getting next ringbuffer entry for sequence: " + sequence + ". NS: " + ns);
+    				if (ns > 100) {
+        	 			System.out.println("PriceEventGenerator - delay getting next ringbuffer entry for sequence: " + sequence + ". MS delay: " + ns);
     				}
                     //Reset the state of the event. Since the events on the ringbuffer 
                     //are reused, processing by event handlers will leave the event
@@ -91,6 +91,14 @@ public class PriceEventGenerator implements Runnable {
                     //     System.out.println("Data producer Stopping after : " + cnt);  
                     //     break;
                     // }
+                    if (cnt % 5000 == 0) {
+                        try {
+                            Thread.sleep(500);
+                        }
+                        catch (InterruptedException ex) {
+                            System.out.println("PriceEventIntervalProducer thread interrupted: " + ex);
+                        }
+                    }
                 }
                 reader.close();
                 Date dateEnd = new Date();

@@ -22,8 +22,8 @@ import org.bson.Document;
 
 import com.google.gson.Gson;
 /**
- * Persists the price quote event to Mongo. The current state of the price event will
- * determine which collection the price event is written to in Mongo.
+ * Persists the price quote event to Mongo. Uses Disruptor batch handling
+ * to batch writes to Mongo
  */
 public class PriceEventToMongoBatchEH implements EventHandler<PriceEvent> {
 	MongoDatabase db = null;
@@ -32,7 +32,10 @@ public class PriceEventToMongoBatchEH implements EventHandler<PriceEvent> {
 	//for the time being I'm using a synchronised list. This is because the onEvent method
 	//below and the 'timer' both access and update the list, and List is not 
 	//thread safe. I will research a better way to do this in future
-	List<Document> events = Collections.synchronizedList(new ArrayList<>());
+	// List<Document> events = Collections.synchronizedList(new ArrayList<>());
+
+	List<Document> eventsList = new ArrayList<>();
+	static final int BATCH_SIZE = 10000;
 
 	public PriceEventToMongoBatchEH() {
 		//Stop the logging to console
@@ -40,18 +43,18 @@ public class PriceEventToMongoBatchEH implements EventHandler<PriceEvent> {
     	mongoLogger.setLevel(Level.SEVERE); 		
     	
     	//Setup a timer to persist data to Mongo
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                persistEvents();
-            }
-        };
+        // TimerTask task = new TimerTask() {
+        //     @Override
+        //     public void run() {
+        //         persistEvents();
+        //     }
+        // };
     
-        Timer timer = new Timer();
-        long delay = 1000;
-        long interval= 1 * 1000; 
+        // Timer timer = new Timer();
+        // long delay = 1000;
+        // long interval= 1 * 1000; 
     
-        timer.scheduleAtFixedRate(task, delay, interval);
+        // timer.scheduleAtFixedRate(task, delay, interval);
 
     	MongoClient mongoClient = null;
 		try {
@@ -66,25 +69,26 @@ public class PriceEventToMongoBatchEH implements EventHandler<PriceEvent> {
 	}
 
 	/**
-	 * Store the events. They will be written to Mongo in batch mode, based
-	 * on a timer setting (i.e. a batch insert every <n> seconds)
+	 * Store the events. They will be written to Mongo in batch mode
 	 */
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
 		event.setPersistInstant();
 		
 		//Convert the event to a Mongo document
     	String eventJson = gson.toJson(event);
-		events.add(new Document("finalpricequote", Document.parse(eventJson)));
+		eventsList.add(new Document("finalpricequote", Document.parse(eventJson)));
+
+		if (eventsList.size() > BATCH_SIZE || endOfBatch) {
+            persistEvents();
+        }
 	}
 	private void persistEvents() {
-		if (events.size() > 0) {
-	 		synchronized (events) {
-	 			Instant start = Instant.now();
-				db.getCollection("finalquotes").insertMany(events);
-				long ns = start.until(Instant.now(), ChronoUnit.NANOS);
-	 			System.out.println("PriceEventToMongoBatchEH - bulk insert. Inserting: " + events.size() + " events. Insert took: " + ns + " nanoseconds");
-				events.clear();
-	  		}		
+		if (eventsList.size() > 0) {
+ 			Instant start = Instant.now();
+			db.getCollection("finalquotes").insertMany(eventsList);
+			long ns = start.until(Instant.now(), ChronoUnit.MILLIS);
+ 			System.out.println("PriceEventToMongoBatchEH - bulk insert. Inserting: " + eventsList.size() + " events. Insert took: " + ns + " MS");
+			eventsList.clear();
 		}
 	}
 }

@@ -15,6 +15,6 @@ import com.lmax.disruptor.EventHandler;
 public class StatsEH implements EventHandler<PriceEvent> {
 	
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
-		StatsManager.eventReceived(event);
+		StatsManager.eventReceived(event, endOfBatch);
 	}
 }

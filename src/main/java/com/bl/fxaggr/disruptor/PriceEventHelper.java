@@ -26,6 +26,8 @@ import com.google.gson.Gson;
  * This class is a helper class of static variables and methods used by the
  * price aggregation engine
  * 
+ * TODO This class is a mess and needs tidying up or rewriting
+ * 
  * TODO refactor the AggrConfig into it's own helper class
  */
 public class PriceEventHelper {
@@ -42,6 +44,7 @@ public class PriceEventHelper {
 	private static long numberconsecutivespikesfiltered;
 	private static long timeintervalformatchingquotesms;
 	private static long minimummatchingquotesrequired;
+	private static int ewmaperiods;
 	
 	//the following variables contain runtime data specifically for the 
 	//Primary Bid-Ask scheme
@@ -80,6 +83,9 @@ public class PriceEventHelper {
         		aggrConfig = gson.fromJson(document.toJson(), AggrConfig.class);  
     		}
 		});
+		if (aggrConfig == null || aggrConfig.currencyconfig == null) {
+	   		System.out.println("PriceEventHelper - no Config in collection aggrconfig. Application requires a config to operate.");
+		}
 		for (AggrConfig.AggrConfigCurrency currencyconfig : aggrConfig.currencyconfig) {
        		aggrcurrencyconfigMap.put(currencyconfig.symbol, currencyconfig);
 		}
@@ -88,6 +94,7 @@ public class PriceEventHelper {
 		numberconsecutivespikesfiltered = aggrConfig.globalconfig.filteringrules.numberconsecutivespikesfiltered;
 		timeintervalformatchingquotesms = aggrConfig.globalconfig.bestbidask.timeintervalformatchingquotesms;
 		minimummatchingquotesrequired = aggrConfig.globalconfig.bestbidask.minimummatchingquotesrequired;
+		ewmaperiods = aggrConfig.globalconfig.smoothing.ewmaperiods;
 		priceSelectionScheme = aggrConfig.globalconfig.scheme;
    		System.out.println("PriceEventHelper Pricing scheme: " + priceSelectionScheme);
    		System.out.println("PriceEventHelper Primary Liquidity Provider: " + currentPrimaryLiquidityProvider);
@@ -111,6 +118,9 @@ public class PriceEventHelper {
 	}
 	public static String getCurrentPrimaryLiquidityProvider() {
 	    return currentPrimaryLiquidityProvider;
+	}
+	public static int getEWMAPeriods() {
+		return ewmaperiods;
 	}
 	public static String getPreviousPrimaryLiquidityProvider() {
 		String lp = null;
