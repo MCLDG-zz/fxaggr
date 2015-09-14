@@ -2,6 +2,7 @@ package com.bl.fxaggr.stats;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -108,9 +109,9 @@ public class StatsManager {
             eventsPerCurrentSecond = 0;
         }
         
-        if (event.getFilterInstant() == null || event.getPriceEntity().getQuoteTimestamp() == null) {
+        if (event.getFilterInstant() == null || event.getPriceEntity().getProcessedTimestamp() == null) {
             System.out.println("StatsManager - event does not contain processing time. event.getFilterInstant() : " + event.getFilterInstant() 
-                + " event.getPriceEntity().getQuoteTimestamp(): " + event.getPriceEntity().getQuoteTimestamp());
+                + " event.getPriceEntity().getProcessedTimestamp(): " + event.getPriceEntity().getProcessedTimestamp());
         }
         else {
             long diffTimeNS = event.getPriceEntity().getProcessedTimestamp().until(event.getFilterInstant(), ChronoUnit.NANOS);
@@ -222,7 +223,7 @@ public class StatsManager {
             }
         }
         eventCounter++;
-        if (eventCounter > BATCH_SIZE) {
+        if (endOfBatch || eventCounter > BATCH_SIZE) {
 	 			    Instant start = Instant.now();
             persistStats();
                     long ns = start.until(Instant.now(), ChronoUnit.MILLIS);
@@ -230,7 +231,11 @@ public class StatsManager {
             eventCounter = 0;
         }
     }
-    private static void persistStats() {
+     public static void resetStats() {
+         symbolStats = new HashMap<String, EventStats>();
+         overallStats = new EventStats();
+     }
+     private static void persistStats() {
     	//Convert the stats to JSON and write to DB
 		Gson gson = new Gson();
     	String jsonOverallStats = gson.toJson(overallStats);

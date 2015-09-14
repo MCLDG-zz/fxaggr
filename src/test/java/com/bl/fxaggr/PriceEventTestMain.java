@@ -33,6 +33,7 @@ import com.mongodb.client.FindIterable;
 
 import com.google.gson.JsonParser;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 /**
  * Test framework for the FX Aggregation Engine
@@ -102,6 +103,13 @@ public class PriceEventTestMain extends Thread {
         Date dateStart = new Date();
         System.out.println("Data producer started processing TestFilter at: " + dateFormat.format(dateStart));
 
+        //Setup the config in PriceEventHelper
+        String[] lps = {"Bloomberg", "Deutsche Bank", "Citibank"};
+        PriceEventHelper.setCurrentPrimaryLiquidityProvider("Bloomberg");
+        PriceEventHelper.setLiquidityProviders(lps);
+        PriceEventHelper.setPriceSelectionScheme("Primary Bid/Ask");
+        System.out.println("Pricing scheme updated to: " + PriceEventHelper.getPriceSelectionScheme());
+
         clearRuntimeResults();
         PriceEventTestGenerator priceEventGenerator = new PriceEventTestGenerator(ringBuffer,
             "/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestFilter.csv");
@@ -144,7 +152,6 @@ public class PriceEventTestMain extends Thread {
         System.out.println("Data producer started processing Best Bid/Ask at: " + dateFormat.format(dateStart));
 
         //Setup the config in PriceEventHelper
-        String[] lps = {"Bloomberg", "Deutsche Bank", "Citibank"};
         PriceEventHelper.setCurrentPrimaryLiquidityProvider("Bloomberg");
         PriceEventHelper.setLiquidityProviders(lps);
         PriceEventHelper.setPriceSelectionScheme("Best Bid/Ask");
@@ -162,6 +169,33 @@ public class PriceEventTestMain extends Thread {
         //Check test results
         Thread.sleep(5000);
         checkTestResults("/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestBestBidAskExpectedResults.json");
+        Thread.sleep(2000);
+        /**********************************************************************************
+        * Execute the test set. These test the Smoothing Scheme
+        **********************************************************************************/
+        dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+        dateStart = new Date();
+        System.out.println("Data producer started processing Smoothing at: " + dateFormat.format(dateStart));
+
+        //Setup the config in PriceEventHelper
+        PriceEventHelper.setCurrentPrimaryLiquidityProvider("Bloomberg");
+        PriceEventHelper.setLiquidityProviders(lps);
+        PriceEventHelper.setPriceSelectionScheme("Smoothing");
+        PriceEventHelper.setEWMAPeriods(3);
+        System.out.println("Pricing scheme updated to: " + PriceEventHelper.getPriceSelectionScheme() + ". Primary Provider is: " + PriceEventHelper.getCurrentPrimaryLiquidityProvider());
+
+        StatsManager.resetStats();
+        clearRuntimeResults();
+        priceEventGenerator = new PriceEventTestGenerator(ringBuffer,
+            "/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestSmoothing.csv");
+        priceEventGenerator.run();
+
+        dateEnd = new Date();
+        System.out.println("Data producer completed processing Smoothing at: " + dateFormat.format(dateEnd));
+
+        //Check test results
+        Thread.sleep(5000);
+        checkTestResults("/home/ubuntu/workspace/fxaggr/src/test/java/com/bl/fxaggr/TestSmoothingExpectedResults.json");
         Thread.sleep(2000);
     }
     /**
@@ -183,10 +217,9 @@ public class PriceEventTestMain extends Thread {
         //Loop through each line in Expected Results; check against the runtimestats collection in Mongo.
         //They should be identical
         File testfile = new File(resultsFilename);
-        try {
-            System.out.println("Test data result checker opening input file " + testfile.toString());
-
-            FileReader reader = new FileReader(testfile);
+        System.out.println("Test data result checker opening input file " + testfile.toString());
+        try (FileReader reader = new FileReader(testfile)) {
+        	
             BufferedReader bufferedReader = new BufferedReader(reader);
 
             String line;
@@ -207,12 +240,73 @@ public class PriceEventTestMain extends Thread {
                 JsonParser parser = new JsonParser();
                 JsonElement o1 = parser.parse(actualResult);
                 JsonElement o2 = parser.parse(line);
-                if (!o1.equals(o2)) {
+                boolean match = true;
+                if (o1.isJsonObject() && o2.isJsonObject()) {
+                    JsonObject jso1 = o1.getAsJsonObject();
+                    JsonObject jso2 = o2.getAsJsonObject();
+                    JsonElement jse1 = jso1.get("totalNumberOfEvents");
+                    JsonElement jse2 = jso2.get("totalNumberOfEvents");
+                    if (jse1 != null && jse2 != null && jse1.getAsLong() != jse2.getAsLong()) {
+                        System.out.println("Test data result checker - totalNumberOfEvents do not match");
+                        match = false;
+                    }
+                    jse1 = jso1.get("totalNumberOfFilteredEvents");
+                    jse2 = jso2.get("totalNumberOfFilteredEvents");
+                    if (jse1 != null && jse2 != null && jse1.getAsLong() != jse2.getAsLong()) {
+                        System.out.println("Test data result checker - totalNumberOfFilteredEvents do not match");
+                        match = false;
+                    }
+                    jse1 = jso1.get("totalLiquidityProviderSwitches");
+                    jse2 = jso2.get("totalLiquidityProviderSwitches");
+                    if (jse1 != null && jse2 != null && jse1.getAsLong() != jse2.getAsLong()) {
+                        System.out.println("Test data result checker - totalLiquidityProviderSwitches do not match");
+                        match = false;
+                    }
+                    jse1 = jso1.get("totalLiquidityProviderSwitchBacks");
+                    jse2 = jso2.get("totalLiquidityProviderSwitchBacks");
+                    if (jse1 != null && jse2 != null && jse1.getAsLong() != jse2.getAsLong()) {
+                        System.out.println("Test data result checker - totalLiquidityProviderSwitchBacks do not match");
+                        match = false;
+                    }
+                    jse1 = jso1.get("totalLiquidityProviderUnableToSwitch");
+                    jse2 = jso2.get("totalLiquidityProviderUnableToSwitch");
+                    if (jse1 != null && jse2 != null && jse1.getAsLong() != jse2.getAsLong()) {
+                        System.out.println("Test data result checker - totalLiquidityProviderUnableToSwitch do not match");
+                        match = false;
+                    }
+                    jse1 = jso1.get("totalNumberConfiguredBestBidAskEvents");
+                    jse2 = jso2.get("totalNumberConfiguredBestBidAskEvents");
+                    if (jse1 != null && jse2 != null && jse1.getAsLong() != jse2.getAsLong()) {
+                        System.out.println("Test data result checker - totalNumberConfiguredBestBidAskEvents do not match");
+                        match = false;
+                    }
+                    jse1 = jso1.get("totalNumberAppliedBestBidAskEvents");
+                    jse2 = jso2.get("totalNumberAppliedBestBidAskEvents");
+                    if (jse1 != null && jse2 != null && jse1.getAsLong() != jse2.getAsLong()) {
+                        System.out.println("Test data result checker - totalNumberAppliedBestBidAskEvents do not match");
+                        match = false;
+                    }
+                    jse1 = jso1.get("totalNumberAppliedPrimaryBidAskEvents");
+                    jse2 = jso2.get("totalNumberAppliedPrimaryBidAskEvents");
+                    if (jse1 != null && jse2 != null && jse1.getAsLong() != jse2.getAsLong()) {
+                        System.out.println("Test data result checker - totalNumberAppliedPrimaryBidAskEvents do not match");
+                        match = false;
+                    }
+                    JsonObject jsosub1 = jso1.getAsJsonObject("numberPerFilteredReason");
+                    JsonObject jsosub2 = jso2.getAsJsonObject("numberPerFilteredReason");
+                    if (jsosub1 != null && jsosub2 != null && jsosub1.getAsJsonObject().equals(jsosub2.getAsJsonObject())) {
+                        System.out.println("Test data result checker - numberPerFilteredReason do not match. Actual: " + jsosub1.toString() + " Expected: " + jsosub2.toString());
+                        match = false;
+                    }
+                }
+                if (!match) {
                     System.out.println("Test data result checker - expected results DO NOT MATCH!! Actual: " + actualResult + " Expected: " + line + ". Equal? " + actualResult.equals(line));
                     return false;
                 }
+                else {
+                    System.out.println("Test data result checker - results MATCH!! " + actualResult);
+                }
             }
-            reader.close();
             System.out.println("Test data result checker processed input file");
         }
         catch (IOException ex) {

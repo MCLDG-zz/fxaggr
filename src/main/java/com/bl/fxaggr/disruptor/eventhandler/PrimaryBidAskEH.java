@@ -27,14 +27,14 @@ import com.lmax.disruptor.EventHandler;
 public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 	
 	private Map<String, AggrConfig.AggrConfigCurrency> aggrcurrencyconfigMap = null;
-	private Map<String, ArrayDeque<Double>> currencyEWMAMap = new HashMap<>();
+	private Map<String, ArrayDeque<PriceEntity>> currencyEWMAMap = new HashMap<>();
 	private int EWMAPeriods = 0;
-	private EWMA ewma = null;
+	private MovingAverage movingAverage = null;
 	private PriceEntity priceEntity;
 
 	public PrimaryBidAskEH() {
 		EWMAPeriods = PriceEventHelper.getEWMAPeriods();
-		ewma = new EWMA(EWMAPeriods);
+		movingAverage = new MovingAverage(EWMAPeriods);
 		System.out.println("PrimaryBidAskEH - EWMA defaulting to " + EWMAPeriods + " periods"); 
 	}
 	
@@ -260,9 +260,10 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 	 */
 	private boolean handleSmoothingScheme(PriceEvent event) {
 		String symbol = priceEntity.getSymbol();
-		ArrayDeque<Double> pricesForCurrency;
-		double bestBid = 0;
-		double bestAsk = 0;
+		ArrayDeque<PriceEntity> pricesForCurrency;
+		Map<String, PriceEntity[]> smoothed = new HashMap<>();
+		double smoothedBid = 0;
+		double smoothedAsk = 0;
 		
 		/*
 		* Get the historical prices for this currency
@@ -271,26 +272,64 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 			pricesForCurrency = currencyEWMAMap.get(symbol);
 		}
 		else {
-			pricesForCurrency = new ArrayDeque();
+			pricesForCurrency = new ArrayDeque<>();
 			currencyEWMAMap.put(symbol, pricesForCurrency);
 		}
 		//Push the new price onto the front of the queue, and remove the last
-		//item (if present)
-		pricesForCurrency.offerFirst(event.getPriceEntity().getBid());
+		//item (if present). If we do not have the required number of periods to
+		//calculate the EWMA, exit this method, in which case the Primary Bid/Ask 
+		//scheme will be used
+		pricesForCurrency.offerFirst(event.getPriceEntity());
+		System.out.println("Smoothing. No of periods required: " + EWMAPeriods + ". Current no. of periods " + pricesForCurrency.size());
+		if (pricesForCurrency.size() < EWMAPeriods) {
+			return false;
+		}
 		if (pricesForCurrency.size() > EWMAPeriods) {
 			pricesForCurrency.pollLast();
 		}
 
 		//Calculate the EWMA		
-		Double[] prices = pricesForCurrency.toArray(new Double[pricesForCurrency.size()]);
-		double calculatedEWMA = ewma.calculate(prices);
-		if (calculatedEWMA == 0) {
+		System.out.println("Smoothing. Calculating EWMA");
+		Double[] bidPrices = new Double[pricesForCurrency.size()];
+		Double[] askPrices = new Double[pricesForCurrency.size()];
+		int i = 0;
+		for(PriceEntity pe : pricesForCurrency) {
+			bidPrices[i] = pe.getBid(); 
+			askPrices[i] = pe.getAsk(); 
+			i++;
+		}
+		double calculatedEWMABid = movingAverage.calculateSMA(bidPrices);
+		double calculatedEWMAAsk = movingAverage.calculateSMA(askPrices);
+		System.out.println("Smoothing. SMA calculated: Bid " + calculatedEWMABid + " Ask " + calculatedEWMAAsk);
+		calculatedEWMABid = movingAverage.calculateWMA(bidPrices);
+		calculatedEWMAAsk = movingAverage.calculateWMA(askPrices);
+		System.out.println("Smoothing. WMA calculated: Bid " + calculatedEWMABid + " Ask " + calculatedEWMAAsk);
+		calculatedEWMABid = movingAverage.calculateEMA(bidPrices);
+		calculatedEWMAAsk = movingAverage.calculateEMA(askPrices);
+		System.out.println("Smoothing. EMA calculated: Bid " + calculatedEWMABid + " Ask " + calculatedEWMAAsk);
+
+		calculatedEWMABid = movingAverage.calculateEWMA(bidPrices);
+		if (calculatedEWMABid == 0) {
+			System.out.println("Smoothing. No Bid EWMA calculated");
 			return false;
 		}
-		
+		calculatedEWMAAsk = movingAverage.calculateEWMA(askPrices);
+		if (calculatedEWMAAsk == 0) {
+			System.out.println("Smoothing. No Ask EWMA calculated");
+			return false;
+		}
+		System.out.println("Smoothing. EWMA calculated: Bid " + calculatedEWMABid + " Ask " + calculatedEWMAAsk);
+
 		//Assume a best bid/ask has been created
 		event.setAppliedSelectionScheme(PriceEvent.AppliedSelectionScheme.SMOOTHING);
-		//event.setBestBidAsk(bestBidAsk);
+		event.setSmoothBid(calculatedEWMABid);
+		event.setSmoothAsk(calculatedEWMAAsk);
+		
+		//TODO - this might be OK for testing but not long term. Since this assigns the REFERENCE
+		//to pricesForCurrency, as soon as this current method is invoked again this object will
+		//change. In subsequent EH's I may write this object to the DB or elsewhere - if it is being
+		//mutated during or before I write it, the contents will be incorrect
+		event.setUsedToCalculateSmoothing(pricesForCurrency);
 		return true;
 	}
 }

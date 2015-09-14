@@ -1,0 +1,4 @@
+20141102 170019000,1.000000,1.100000,Bloomberg,USDCAD,"ACCEPTED SEQ 0 - no smoothing, but this is the primary provider"
+20141102 170019001,1.010000,1.102000,Citibank,USDCAD,"FILTERED SEQ 1 - no smoothing, and not primary provider"
+20141102 170019002,1.020000,1.103000,Deutsche Bank,USDCAD,"ACCEPTED SEQ 2 - we now have 3 prices so this one should be smoothed using EWMA"
+20141102 170019005,1.030000,1.104000,Bloomberg,USDCAD,"ACCEPTED SEQ 3 - we now have 4 prices so this one should be smoothed using EWMA"

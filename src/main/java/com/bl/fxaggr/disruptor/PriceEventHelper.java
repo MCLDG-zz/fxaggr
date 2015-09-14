@@ -122,6 +122,9 @@ public class PriceEventHelper {
 	public static int getEWMAPeriods() {
 		return ewmaperiods;
 	}
+	public static void setEWMAPeriods(int periods) {
+		ewmaperiods = periods;
+	}
 	public static String getPreviousPrimaryLiquidityProvider() {
 		String lp = null;
 		try {

@@ -23,7 +23,8 @@ db.aggrconfig.insert({
             "numberconsecutivespikesfiltered": 3
         },
         "smoothing": {
-            "ewmaperiods": 10
+            "ewmaperiods": 3,
+            "smoothprimaryorall": "all"
         }
     },
     "providerconfig": [{

@@ -29,6 +29,7 @@ public static class bestbidask {
 }
 public static class smoothing {
     public  int ewmaperiods;
+    public  String smoothprimaryorall;
 }
 public static class filteringrules {
     public  long numberconsecutivespikesfiltered;

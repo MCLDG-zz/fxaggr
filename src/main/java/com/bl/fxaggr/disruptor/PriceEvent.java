@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Deque;
 import java.time.Instant;
 import java.time.LocalDateTime;
 
@@ -31,6 +32,9 @@ public class PriceEvent {
     private List<FilterReason> filterReasons = new ArrayList<>();
     private List<String> eventAuditTrail = new ArrayList<>();
     private Map<String, PriceEntity> bestBidAsk = null;
+    private double smoothBid;
+    private double smoothAsk;
+    private Deque<PriceEntity> usedToCalculateSmoothing = null;
     public long recordNum = 0;
     
     //Store useful timing information
@@ -154,6 +158,15 @@ public class PriceEvent {
     }
     public Map<String, PriceEntity> getBestBidAsk() {
         return bestBidAsk;
+    }
+    public void setSmoothBid(double smoothBid) {
+        this.smoothBid = smoothBid;
+    }
+    public void setSmoothAsk(double smoothAsk) {
+        this.smoothAsk = smoothAsk;
+    }
+    public void setUsedToCalculateSmoothing(Deque<PriceEntity> usedToCalculateSmoothing) {
+        this.usedToCalculateSmoothing = usedToCalculateSmoothing;
     }
     public void setQuoteInstant(LocalDateTime timestamp) {
         this.quoteInstant = timestamp;

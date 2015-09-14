@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
+import java.time.Instant;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.lang.InterruptedException;
@@ -69,7 +70,8 @@ public class PriceEventTestGenerator implements Runnable {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd HHmmssSSS");
                     LocalDateTime dateTime = LocalDateTime.parse(tokens[0], formatter);
                     priceEvent.getPriceEntity().setSequence(sequence);
-                    priceEvent.getPriceEntity().setDatetime(dateTime);
+                    priceEvent.getPriceEntity().setQuoteTimestamp(dateTime);
+                    priceEvent.getPriceEntity().setProcessedTimestamp(Instant.now());
                     priceEvent.getPriceEntity().setBid(Double.valueOf(tokens[1]));
                     priceEvent.getPriceEntity().setAsk(Double.valueOf(tokens[2]));
                     priceEvent.getPriceEntity().setSpread(priceEvent.getPriceEntity().getAsk() - priceEvent.getPriceEntity().getBid());
