@@ -26,16 +26,13 @@ import com.lmax.disruptor.EventHandler;
  */
 public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 	
-	private Map<String, AggrConfig.AggrConfigCurrency> aggrcurrencyconfigMap = null;
 	private Map<String, ArrayDeque<PriceEntity>> currencyEWMAMap = new HashMap<>();
-	private int EWMAPeriods = 0;
 	private MovingAverage movingAverage = null;
 	private PriceEntity priceEntity;
 
 	public PrimaryBidAskEH() {
-		EWMAPeriods = PriceEventHelper.getEWMAPeriods();
-		movingAverage = new MovingAverage(EWMAPeriods);
-		System.out.println("PrimaryBidAskEH - EWMA defaulting to " + EWMAPeriods + " periods"); 
+		movingAverage = new MovingAverage(AggrConfigHelper.getEWMAPeriods());
+		System.out.println("PrimaryBidAskEH - EWMA defaulting to " + AggrConfigHelper.getEWMAPeriods() + " periods"); 
 	}
 	
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
@@ -43,11 +40,11 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		priceEntity = event.getPriceEntity();
 		PriceEventHelper.storeLatestPriceQuote(priceEntity);
 		event.setEventState(PriceEvent.EventState.COMPARISON_COMPLETED);
-		event.setConfiguredSelectionScheme(PriceEventHelper.getPriceSelectionScheme());
+		event.setConfiguredSelectionScheme(AggrConfigHelper.getPriceSelectionScheme());
 		event.setBidAskInstant();
 
 		//Ensure we have a valid config
-		if (PriceEventHelper.aggrConfig == null) {
+		if (AggrConfigHelper.aggrConfig == null) {
 			System.out.println("PrimaryBidAskEH cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
 			event.addAuditEvent("PrimaryBidAskEH. Cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
 			return;
@@ -67,7 +64,7 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		 
 		//Now process the event based on the current price selection scheme as 
 		//defined in the config
-		switch(PriceEventHelper.getPriceSelectionScheme()) {
+		switch(AggrConfigHelper.getPriceSelectionScheme()) {
 			case "Primary Bid/Ask": 
 				if (!this.handlePrimaryBidAskScheme(event)) {
 					event.setEventStatus(PriceEvent.EventStatus.FILTERED);
@@ -132,13 +129,16 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		//switch back to the previous primary provider
 		if (PriceEventHelper.isPreviousPrimaryLiquidityProvider() &&
 			PriceEventHelper.matchPreviousPrimaryLiquidityProvider(priceEntity.getLiquidityProvider())) {
+			System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - isPreviousPrimaryLiquidityProvider:  " + PriceEventHelper.isPreviousPrimaryLiquidityProvider() 
+				+ " matches previous primary: " + PriceEventHelper.matchPreviousPrimaryLiquidityProvider(priceEntity.getLiquidityProvider())); 
 				
 			PriceEventHelper.incrementPriceCounterForPreviousPrimaryProvider(priceEntity.getLiquidityProvider());
+			System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - match required number primary quotes:  " + PriceEventHelper.isRequiredNumberPreviousPrimaryQuotesReceived(priceEntity.getLiquidityProvider())); 
 			if (PriceEventHelper.isRequiredNumberPreviousPrimaryQuotesReceived(priceEntity.getLiquidityProvider())) {
 				
 				if (PriceEventHelper.switchToPreviousBidAskLiquidityProvider(priceEntity.getLiquidityProvider())) {
 					event.setEventLPSwitch(PriceEvent.EventLPSwitch.SWITCH_BACK_PREVIOUS_PRIMARY);
-					System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - switched to previous Primary Provider: " + PriceEventHelper.getCurrentPrimaryLiquidityProvider()); 
+					System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - switched to previous Primary Provider: " + AggrConfigHelper.getCurrentPrimaryLiquidityProvider()); 
 				}
 				else {
 					event.setEventLPSwitch(PriceEvent.EventLPSwitch.UNABLE_TO_SWITCH);
@@ -158,7 +158,7 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		* re-evaluated against the new primary
 		*/
 		while (i < 2) {
-			if (PriceEventHelper.getCurrentPrimaryLiquidityProvider().equals(priceEntity.getLiquidityProvider())) {
+			if (AggrConfigHelper.getCurrentPrimaryLiquidityProvider().equals(priceEntity.getLiquidityProvider())) {
 
 				//update the timestamp to indicate when latest primary quote received
 				//TODO: I'm not sure whether we switch to secondary liquidity provider
@@ -182,17 +182,17 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 				//
 				//TODO - should I switch back if quotes are received from previous primary???
 				if (PriceEventHelper.isIntervalSinceLastPrimaryPriceExceeded()) {
-					System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - no quotes received for primary. About to switch to next Primary Provider. Current provider is: " + PriceEventHelper.getCurrentPrimaryLiquidityProvider()); 
+					System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - no quotes received for primary. About to switch to next Primary Provider. Current provider is: " + AggrConfigHelper.getCurrentPrimaryLiquidityProvider()); 
 					
 					if (PriceEventHelper.switchToNextBidAskLiquidityProvider()) {
 						event.setEventLPSwitch(PriceEvent.EventLPSwitch.SWITCH_NEXT_PRIMARY);
 						PriceEventHelper.notePrimaryPriceQuote();
-						System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - switched to new Primary Provider: " + PriceEventHelper.getCurrentPrimaryLiquidityProvider()); 
+						System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - switched to new Primary Provider: " + AggrConfigHelper.getCurrentPrimaryLiquidityProvider()); 
 						continue;
 					}
 					else {
 						event.setEventLPSwitch(PriceEvent.EventLPSwitch.UNABLE_TO_SWITCH);
-						System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - UNABLE to switch to new Primary Provider. Current provider is: "  + PriceEventHelper.getCurrentPrimaryLiquidityProvider()); 
+						System.out.println("Sequence: " + priceEntity.getSequence() + ". PrimaryBidAskEH - UNABLE to switch to new Primary Provider. Current provider is: "  + AggrConfigHelper.getCurrentPrimaryLiquidityProvider()); 
 						return false;
 					}
 				}
@@ -280,11 +280,11 @@ public class PrimaryBidAskEH implements EventHandler<PriceEvent> {
 		//calculate the EWMA, exit this method, in which case the Primary Bid/Ask 
 		//scheme will be used
 		pricesForCurrency.offerFirst(event.getPriceEntity());
-		System.out.println("Smoothing. No of periods required: " + EWMAPeriods + ". Current no. of periods " + pricesForCurrency.size());
-		if (pricesForCurrency.size() < EWMAPeriods) {
+		System.out.println("Smoothing. No of periods required: " + AggrConfigHelper.getEWMAPeriods() + ". Current no. of periods " + pricesForCurrency.size());
+		if (pricesForCurrency.size() < AggrConfigHelper.getEWMAPeriods()) {
 			return false;
 		}
-		if (pricesForCurrency.size() > EWMAPeriods) {
+		if (pricesForCurrency.size() > AggrConfigHelper.getEWMAPeriods()) {
 			pricesForCurrency.pollLast();
 		}
 

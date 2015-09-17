@@ -105,10 +105,10 @@ public class PriceEventTestMain extends Thread {
 
         //Setup the config in PriceEventHelper
         String[] lps = {"Bloomberg", "Deutsche Bank", "Citibank"};
-        PriceEventHelper.setCurrentPrimaryLiquidityProvider("Bloomberg");
-        PriceEventHelper.setLiquidityProviders(lps);
-        PriceEventHelper.setPriceSelectionScheme("Primary Bid/Ask");
-        System.out.println("Pricing scheme updated to: " + PriceEventHelper.getPriceSelectionScheme());
+        AggrConfigHelper.setCurrentPrimaryLiquidityProvider("Bloomberg");
+        AggrConfigHelper.setLiquidityProviders(lps);
+        AggrConfigHelper.setPriceSelectionScheme("Primary Bid/Ask");
+        System.out.println("Pricing scheme updated to: " + AggrConfigHelper.getPriceSelectionScheme());
 
         clearRuntimeResults();
         PriceEventTestGenerator priceEventGenerator = new PriceEventTestGenerator(ringBuffer,
@@ -152,10 +152,10 @@ public class PriceEventTestMain extends Thread {
         System.out.println("Data producer started processing Best Bid/Ask at: " + dateFormat.format(dateStart));
 
         //Setup the config in PriceEventHelper
-        PriceEventHelper.setCurrentPrimaryLiquidityProvider("Bloomberg");
-        PriceEventHelper.setLiquidityProviders(lps);
-        PriceEventHelper.setPriceSelectionScheme("Best Bid/Ask");
-        System.out.println("Pricing scheme updated to: " + PriceEventHelper.getPriceSelectionScheme() + ". Primary Provider is: " + PriceEventHelper.getCurrentPrimaryLiquidityProvider());
+        AggrConfigHelper.setCurrentPrimaryLiquidityProvider("Bloomberg");
+        AggrConfigHelper.setLiquidityProviders(lps);
+        AggrConfigHelper.setPriceSelectionScheme("Best Bid/Ask");
+        System.out.println("Pricing scheme updated to: " + AggrConfigHelper.getPriceSelectionScheme() + ". Primary Provider is: " + AggrConfigHelper.getCurrentPrimaryLiquidityProvider());
 
         StatsManager.resetStats();
         clearRuntimeResults();
@@ -178,11 +178,11 @@ public class PriceEventTestMain extends Thread {
         System.out.println("Data producer started processing Smoothing at: " + dateFormat.format(dateStart));
 
         //Setup the config in PriceEventHelper
-        PriceEventHelper.setCurrentPrimaryLiquidityProvider("Bloomberg");
-        PriceEventHelper.setLiquidityProviders(lps);
-        PriceEventHelper.setPriceSelectionScheme("Smoothing");
-        PriceEventHelper.setEWMAPeriods(3);
-        System.out.println("Pricing scheme updated to: " + PriceEventHelper.getPriceSelectionScheme() + ". Primary Provider is: " + PriceEventHelper.getCurrentPrimaryLiquidityProvider());
+        AggrConfigHelper.setCurrentPrimaryLiquidityProvider("Bloomberg");
+        AggrConfigHelper.setLiquidityProviders(lps);
+        AggrConfigHelper.setPriceSelectionScheme("Smoothing");
+        AggrConfigHelper.setEWMAPeriods(3);
+        System.out.println("Pricing scheme updated to: " + AggrConfigHelper.getPriceSelectionScheme() + ". Primary Provider is: " + AggrConfigHelper.getCurrentPrimaryLiquidityProvider());
 
         StatsManager.resetStats();
         clearRuntimeResults();

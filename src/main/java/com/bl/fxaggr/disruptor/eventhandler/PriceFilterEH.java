@@ -46,8 +46,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	private Map<String, Long> bidSpikeHiCounter = new HashMap<>();
 	private Map<String, Long> askSpikeLoCounter = new HashMap<>();
 	private Map<String, Long> bidSpikeLoCounter = new HashMap<>();
-	private String currency = null;
 	private AggrConfig.AggrConfigCurrency aggrConfigCurrency;
+	private String currency = null;
 	private PriceStats priceStats;
 	private PreviousPrice previousPrice = null;
 	private PriceEntity priceEntity;
@@ -87,7 +87,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		event.setEventState(PriceEvent.EventState.FILTER_COMPLETED);
 		event.setFilterInstant();
 		
-		if (PriceEventHelper.aggrConfig == null) {
+		if (AggrConfigHelper.aggrConfig == null) {
 			System.out.println("PriceFilterEH cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
 			event.addAuditEvent("PriceFilterEH. Cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
 			return;
@@ -107,7 +107,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		currency = priceEntity.getSymbol();
 		int hour = priceEntity.getQuoteTimestamp().get(ChronoField.HOUR_OF_DAY);
 		priceStats = priceStatsMap.get(currency + hour);
-		aggrConfigCurrency = PriceEventHelper.aggrcurrencyconfigMap.get(currency);
+		aggrConfigCurrency = AggrConfigHelper.aggrcurrencyconfigMap.get(currency);
 		previousPrice = previousPriceMap.get(currency);
 
 		//Check if the spread falls within the acceptable range
@@ -151,7 +151,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 					else {
 						askSpikeHiCounter.put(currency, new Long(1));
 					}
-					if (askSpikeHiCounter.get(currency) > PriceEventHelper.getNumberConsecutiveSpikesFiltered()) {
+					if (askSpikeHiCounter.get(currency) > AggrConfigHelper.getNumberConsecutiveSpikesFiltered()) {
 						System.out.println("Sequence: " + sequence + ". Treating ask price spike as new normal."); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating ask price spike as new normal."); 
 						askSpikeHiCounter.replace(currency, new Long(0));
@@ -171,7 +171,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 					else {
 						askSpikeLoCounter.put(currency, new Long(1));
 					}
-					if (askSpikeLoCounter.get(currency) > PriceEventHelper.getNumberConsecutiveSpikesFiltered()) {
+					if (askSpikeLoCounter.get(currency) > AggrConfigHelper.getNumberConsecutiveSpikesFiltered()) {
 						System.out.println("Sequence: " + sequence + ". Treating ask price spike as new normal."); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating ask price spike as new normal."); 
 						askSpikeLoCounter.replace(currency, new Long(0));
@@ -199,7 +199,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 					else {
 						bidSpikeHiCounter.put(currency, new Long(1));
 					}
-					if (bidSpikeHiCounter.get(currency) > PriceEventHelper.getNumberConsecutiveSpikesFiltered()) {
+					if (bidSpikeHiCounter.get(currency) > AggrConfigHelper.getNumberConsecutiveSpikesFiltered()) {
 						System.out.println("Sequence: " + sequence + ". Treating bid price spike as new normal."); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating bid price spike as new normal."); 
 						bidSpikeHiCounter.replace(currency, new Long(0));
@@ -219,7 +219,7 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 					else {
 						bidSpikeLoCounter.put(currency, new Long(1));
 					}
-					if (bidSpikeLoCounter.get(currency) > PriceEventHelper.getNumberConsecutiveSpikesFiltered()) {
+					if (bidSpikeLoCounter.get(currency) > AggrConfigHelper.getNumberConsecutiveSpikesFiltered()) {
 						System.out.println("Sequence: " + sequence + ". Treating bid price spike as new normal."); 
 						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating bid price spike as new normal."); 
 						bidSpikeLoCounter.replace(currency, new Long(0));
@@ -282,27 +282,27 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	 */
 	private void persistOutliers(String message) {
 		Gson gson = new Gson();
-    	String jsonMessage = gson.toJson(message);
-    	String jsonAggrConfig = gson.toJson( (PriceEventHelper.aggrConfig == null) ? new AggrConfig() : PriceEventHelper.aggrConfig );
-    	String jsonPriceStats = gson.toJson( (priceStats == null) ? new PriceStats() : priceStats );
-    	String jsonPreviousPrice = gson.toJson( (previousPrice == null) ? new PreviousPrice() : previousPrice );
-    	String jsonPriceEntity = gson.toJson( (priceEntity == null) ? new PriceEntity() : priceEntity );
+    	// String jsonMessage = gson.toJson(message);
+    	// String jsonAggrConfig = gson.toJson( (PriceEventHelper.aggrConfig == null) ? new AggrConfig() : PriceEventHelper.aggrConfig );
+    	// String jsonPriceStats = gson.toJson( (priceStats == null) ? new PriceStats() : priceStats );
+    	// String jsonPreviousPrice = gson.toJson( (previousPrice == null) ? new PreviousPrice() : previousPrice );
+    	// String jsonPriceEntity = gson.toJson( (priceEntity == null) ? new PriceEntity() : priceEntity );
     	// System.out.println("GSON objects null: " + (aggrConfig == null) + (priceStats == null) + (previousPrice == null) + (priceEntity == null));
     	// System.out.println("jsonAggrConfig: " + jsonAggrConfig);
     	// System.out.println("jsonPriceStats: " + jsonPriceStats);
     	// System.out.println("jsonPreviousPrice: " + jsonPreviousPrice);
     	// System.out.println("jsonPriceEntity: " + jsonPriceEntity);
     	// System.out.println("GSON objects null: " + (jsonAggrConfig == null) + (jsonPriceStats == null) + (jsonPreviousPrice == null) + (jsonPriceEntity == null));
-		db.getCollection("priceoutliers").insertOne(
-			new Document("priceoutlier",
-				new Document()
-					.append("message", message)
-					.append("currentpriceentity", Document.parse(jsonPriceEntity))
-					.append("previousprice", Document.parse(jsonPreviousPrice))
-					.append("config", Document.parse(jsonAggrConfig))
-					.append("pricestats", Document.parse((jsonPriceStats == null) ? "{}" : jsonPriceStats))
-			)
-		);
+		// db.getCollection("priceoutliers").insertOne(
+		// 	new Document("priceoutlier",
+		// 		new Document()
+		// 			.append("message", message)
+		// 			.append("currentpriceentity", Document.parse(jsonPriceEntity))
+		// 			.append("previousprice", Document.parse(jsonPreviousPrice))
+		// 			.append("config", Document.parse(jsonAggrConfig))
+		// 			.append("pricestats", Document.parse((jsonPriceStats == null) ? "{}" : jsonPriceStats))
+		// 	)
+		// );
 	}
 	
 	/**

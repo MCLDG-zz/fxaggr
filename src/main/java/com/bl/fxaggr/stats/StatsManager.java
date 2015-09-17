@@ -227,7 +227,7 @@ public class StatsManager {
 	 			    Instant start = Instant.now();
             persistStats();
                     long ns = start.until(Instant.now(), ChronoUnit.MILLIS);
-    	 			System.out.println("StatsManager - persisting stats for " + eventCounter + " events. MS to persist: " + ns);
+    	 			//System.out.println("StatsManager - persisting stats for " + eventCounter + " events. MS to persist: " + ns);
             eventCounter = 0;
         }
     }

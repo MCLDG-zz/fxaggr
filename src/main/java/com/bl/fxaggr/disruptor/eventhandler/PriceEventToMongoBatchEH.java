@@ -87,7 +87,7 @@ public class PriceEventToMongoBatchEH implements EventHandler<PriceEvent> {
  			Instant start = Instant.now();
 			db.getCollection("finalquotes").insertMany(eventsList);
 			long ns = start.until(Instant.now(), ChronoUnit.MILLIS);
- 			System.out.println("PriceEventToMongoBatchEH - bulk insert. Inserting: " + eventsList.size() + " events. Insert took: " + ns + " MS");
+ 			//System.out.println("PriceEventToMongoBatchEH - bulk insert. Inserting: " + eventsList.size() + " events. Insert took: " + ns + " MS");
 			eventsList.clear();
 		}
 	}

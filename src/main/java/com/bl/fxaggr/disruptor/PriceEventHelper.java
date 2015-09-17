@@ -32,19 +32,7 @@ import com.google.gson.Gson;
  */
 public class PriceEventHelper {
     
-	public static Map<String, AggrConfig.AggrConfigCurrency> aggrcurrencyconfigMap = new HashMap<>();
-	public static AggrConfig aggrConfig;
-
 	private static MongoDatabase db = null;
-	
-	//the following variables contain config values from AggrConfig
-	private static String priceSelectionScheme = null;
-	private static String currentPrimaryLiquidityProvider = null;
-	private static String[] currentLiquidityProviders = null;
-	private static long numberconsecutivespikesfiltered;
-	private static long timeintervalformatchingquotesms;
-	private static long minimummatchingquotesrequired;
-	private static int ewmaperiods;
 	
 	//the following variables contain runtime data specifically for the 
 	//Primary Bid-Ask scheme
@@ -59,47 +47,6 @@ public class PriceEventHelper {
 	//Best Bid-Ask scheme
 	private static Map<String, PriceEntity> latestPriceQuotes = new HashMap<>();
 	
-	static {
-		//Stop the logging to console
-		Logger mongoLogger = Logger.getLogger( "org.mongodb.driver" );
-    	mongoLogger.setLevel(Level.SEVERE); 		
-		MongoClient mongoClient = null;
-		try {
-			mongoClient = new MongoClient();
-		} 
-		catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		db = mongoClient.getDatabase("fxaggr");
-
-		//Read the config from the aggrconfig collection in Mongo
-		FindIterable<Document> iterable = db.getCollection("aggrconfig").find();
-	
-	   	iterable.forEach(new Block<Document>() {
-    		@Override
-    		public void apply(final Document document) {
-   				Gson gson = new Gson();
-        		aggrConfig = gson.fromJson(document.toJson(), AggrConfig.class);  
-    		}
-		});
-		if (aggrConfig == null || aggrConfig.currencyconfig == null) {
-	   		System.out.println("PriceEventHelper - no Config in collection aggrconfig. Application requires a config to operate.");
-		}
-		for (AggrConfig.AggrConfigCurrency currencyconfig : aggrConfig.currencyconfig) {
-       		aggrcurrencyconfigMap.put(currencyconfig.symbol, currencyconfig);
-		}
-		currentLiquidityProviders = aggrConfig.globalconfig.liquidityproviders;
-		currentPrimaryLiquidityProvider = aggrConfig.globalconfig.liquidityproviders[0];
-		numberconsecutivespikesfiltered = aggrConfig.globalconfig.filteringrules.numberconsecutivespikesfiltered;
-		timeintervalformatchingquotesms = aggrConfig.globalconfig.bestbidask.timeintervalformatchingquotesms;
-		minimummatchingquotesrequired = aggrConfig.globalconfig.bestbidask.minimummatchingquotesrequired;
-		ewmaperiods = aggrConfig.globalconfig.smoothing.ewmaperiods;
-		priceSelectionScheme = aggrConfig.globalconfig.scheme;
-   		System.out.println("PriceEventHelper Pricing scheme: " + priceSelectionScheme);
-   		System.out.println("PriceEventHelper Primary Liquidity Provider: " + currentPrimaryLiquidityProvider);
-	}
-
 	public static void notePrimaryPriceQuote() {
 	    timeOfLastPrimaryPrice = Instant.now();
 	}
@@ -108,22 +55,7 @@ public class PriceEventHelper {
 	        timeOfLastPrimaryPrice = Instant.now();
 	    }
 	    long intervalMS = timeOfLastPrimaryPrice.until(Instant.now(), ChronoUnit.MILLIS);
-	    return (intervalMS > aggrConfig.globalconfig.primarybidask.timeintervalbeforeswitchingms);
-	}
-	public static void setLiquidityProviders(String[] lps) {
-	    currentLiquidityProviders = lps;
-	}
-	public static void setCurrentPrimaryLiquidityProvider(String lp) {
-	    currentPrimaryLiquidityProvider = lp;
-	}
-	public static String getCurrentPrimaryLiquidityProvider() {
-	    return currentPrimaryLiquidityProvider;
-	}
-	public static int getEWMAPeriods() {
-		return ewmaperiods;
-	}
-	public static void setEWMAPeriods(int periods) {
-		ewmaperiods = periods;
+	    return (intervalMS > AggrConfigHelper.getTimeIntervalForMatchingQuotesMS());
 	}
 	public static String getPreviousPrimaryLiquidityProvider() {
 		String lp = null;
@@ -153,23 +85,16 @@ public class PriceEventHelper {
 		if (!(l == null)) {
 			countPreviousPrimaryLiquidityProviders.replace(lp, l + 1);
 		}
+		System.out.println("incrementPriceCounterForPreviousPrimaryProvider for provider: " + lp + " counter: " + (l + 1));
 	    return l;
 	}
 	public static boolean isRequiredNumberPreviousPrimaryQuotesReceived(String lp) {
 		Long l = countPreviousPrimaryLiquidityProviders.get(lp);
-	    return (l > aggrConfig.globalconfig.primarybidask.numberquotesbeforeswitchtoprevious);
+		System.out.println("isRequiredNumberPreviousPrimaryQuotesReceived for provider: " + lp + " counter: " + l + " config" + AggrConfigHelper.getNumberQuotesBeforeSwitchToPrevious());
+	    return (l > AggrConfigHelper.getNumberQuotesBeforeSwitchToPrevious());
 	}
 	public static void resetNumberPreviousPrimaryQuotesReceived() {
 		countPreviousPrimaryLiquidityProviders.forEach((k,v) -> {v = new Long(0);});
-	}
-	public static String getPriceSelectionScheme() {
-	    return priceSelectionScheme;
-	}
-	public static void setPriceSelectionScheme(String scheme) {
-	    priceSelectionScheme = scheme;
-	}
-	public static long getNumberConsecutiveSpikesFiltered() {
-	    return numberconsecutivespikesfiltered;
 	}
 	/**
 	 * Find current liquidity provider in the array, then set the new
@@ -192,22 +117,22 @@ public class PriceEventHelper {
 	 * 			successfully switched
 	 */
 	public static boolean switchToNextBidAskLiquidityProvider() {
-		for (int i = 0; i < currentLiquidityProviders.length; i++) {
-        	if (currentPrimaryLiquidityProvider.equals(currentLiquidityProviders[i])) {
+		for (int i = 0; i < AggrConfigHelper.getCurrentLiquidityProviders().length; i++) {
+        	if (AggrConfigHelper.getCurrentPrimaryLiquidityProvider().equals(AggrConfigHelper.getCurrentLiquidityProviders()[i])) {
         		//Check if there are more liquidity providers available
-        		if (i == (currentLiquidityProviders.length - 1)) {
-        			if (aggrConfig.globalconfig.primarybidask.actionwhennomoreliquidityproviders.equals("Stay with current provider")) {
+        		if (i == (AggrConfigHelper.getCurrentLiquidityProviders().length - 1)) {
+        			if (AggrConfigHelper.getActionWhenNoMoreLiquidityProviders().equals("Stay with current provider")) {
         				//Do nothing. Do not change providers
-						System.out.println("PriceEventHelper - could not switch providers. No providers available. Current is: " + getCurrentPrimaryLiquidityProvider()); 
+						System.out.println("PriceEventHelper - could not switch providers. No providers available. Current is: " + AggrConfigHelper.getCurrentPrimaryLiquidityProvider());
         				return false;
         			}
         		}
         		//Switch providers
-        		previousPrimaryLiquidityProviders.push(currentPrimaryLiquidityProvider);
-        		countPreviousPrimaryLiquidityProviders.put(currentPrimaryLiquidityProvider, new Long(0));
+        		previousPrimaryLiquidityProviders.push(AggrConfigHelper.getCurrentPrimaryLiquidityProvider());
+        		countPreviousPrimaryLiquidityProviders.put(AggrConfigHelper.getCurrentPrimaryLiquidityProvider(), new Long(0));
         		isPreviousPrimaryLiquidityProvider = true;
 				resetNumberPreviousPrimaryQuotesReceived();
-				currentPrimaryLiquidityProvider = currentLiquidityProviders[i + 1];
+				AggrConfigHelper.setCurrentPrimaryLiquidityProvider(AggrConfigHelper.getCurrentLiquidityProviders()[i + 1]);
 				return true;
         	}
 		}
@@ -244,8 +169,8 @@ public class PriceEventHelper {
 			String prevLP = null;
 			while (!(lp.equals(prevLP))) {
 		       	prevLP = previousPrimaryLiquidityProviders.pop();
-	       		countPreviousPrimaryLiquidityProviders.remove(currentPrimaryLiquidityProvider);
-				currentPrimaryLiquidityProvider = prevLP;
+	       		countPreviousPrimaryLiquidityProviders.remove(AggrConfigHelper.getCurrentPrimaryLiquidityProvider());
+				AggrConfigHelper.setCurrentPrimaryLiquidityProvider(prevLP);
 			}
 			resetNumberPreviousPrimaryQuotesReceived();
 			successfulSwitch = true;
@@ -280,13 +205,13 @@ public class PriceEventHelper {
 		Map<String, PriceEntity> bestBidAsk = new HashMap<>();
 		List<PriceEntity> priceQuotes = new ArrayList<>();
 		
-		for (int i = 0; i < currentLiquidityProviders.length; i++) {
-			PriceEntity pe = latestPriceQuotes.get(currentLiquidityProviders[i] + symbol);
+		for (int i = 0; i < AggrConfigHelper.getCurrentLiquidityProviders().length; i++) {
+			PriceEntity pe = latestPriceQuotes.get(AggrConfigHelper.getCurrentLiquidityProviders()[i] + symbol);
 			if (pe != null) {
 				//check the timestamp, which must be within the bounds defined in
 				//the config, in 'bestbidask.timeintervalformatchingquotesms'
 				long msBetween = pe.getProcessedTimestamp().until(Instant.now(), ChronoUnit.MILLIS);
-				if (msBetween <= timeintervalformatchingquotesms) {
+				if (msBetween <= AggrConfigHelper.getTimeIntervalForMatchingQuotesMS()) {
 					priceQuotes.add(pe);
 					numValidQuotes++;
 					//update the best bid/ask
@@ -303,7 +228,7 @@ public class PriceEventHelper {
 		}
 		//check the number of valid quotes, which must be at least equal to value specified in
 		//the config, in 'bestbidask.minimummatchingquotesrequired'
-		if (numValidQuotes >= minimummatchingquotesrequired) {
+		if (numValidQuotes >= AggrConfigHelper.getMinimumMatchingQuotesRequired()) {
 			return bestBidAsk;
 		}
 		else {
