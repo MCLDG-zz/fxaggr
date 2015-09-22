@@ -9,6 +9,9 @@ db.aggrconfig.insert({
         "availableschemes": ["Primary Bid/Ask", "Primary Bid/Best Ask", "Best Bid/Primary Ask", "Best Bid/Ask"],
         "scheme": "Primary Bid/Ask",
         "liquidityproviders": ["Deutsche Bank", "Citibank", "Bloomberg"],
+        "pricefeedtimezone": "GMT",
+        "systemtimezone": "GMT",
+        "allowabletimeintervalfeedtosystemms": 31556952000,
         "primarybidask": {
             "timeintervalbeforeswitchingms": 5000,
             "numberquotesbeforeswitchtoprevious": 3,
@@ -21,8 +24,27 @@ db.aggrconfig.insert({
         },
         "filteringrules": {
             "numberconsecutivespikesfiltered": 3
+        },
+        "smoothing": {
+            "ewmaperiods": 3,
+            "smoothprimaryorall": "all"
         }
     },
+    "providerconfig": [{
+        "providername": "HKD-DB",
+        "serverIP": "192.168.9.51",
+        "serverPort": 22250,
+        "username": "db-login",
+        "password": "db-password"
+        
+    }, {
+        "providername": "Saxo HK",
+        "serverIP": "192.168.9.11",
+        "serverPort": 21250,
+        "username": "saxo-login",
+        "password": "saxo-password"
+        
+    }],
     "currencyconfig": [{
         "symbol": "USDCAD",
         "pctLeewayAllowedSpread": 2.0,

@@ -7,6 +7,8 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.Instant;
 import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
@@ -27,9 +29,10 @@ import com.google.gson.Gson;
 /**
  * Responsible for filtering price events. Filtering includes the following:
  * <ul>
+ * <li>Negative spread
  * <li>Spread too large
  * <li>Bid/Ask spike
- * <li>etc.
+ * <li>Price stale
  * </ul>
  * <p>
  * The key characteristic of filtering is that it considers the current event ONLY.
@@ -51,6 +54,8 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 	private PriceStats priceStats;
 	private PreviousPrice previousPrice = null;
 	private PriceEntity priceEntity;
+	private long sequence;
+	private double spread;
 	private MongoDatabase db = null;
 	
 	public PriceFilterEH() {
@@ -81,26 +86,32 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		});
    		System.out.println("Number of PriceStats items: " + priceStatsMap.size());
 	}
-
+	/**
+	 * Determine whether to filter this event or not. The following filter rules
+	 * are checked:
+	 * 
+	 * <ul>
+	 * <li>Negative spread
+	 * <li>Spread too large
+	 * <li>Bid/Ask spike
+	 * <li>Price stale
+	 * </ul>
+	 */ 
 	public void onEvent(PriceEvent event, long sequence, boolean endOfBatch) {
 
 		event.setEventState(PriceEvent.EventState.FILTER_COMPLETED);
 		event.setFilterInstant();
 		
 		if (AggrConfigHelper.aggrConfig == null) {
-			System.out.println("PriceFilterEH cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
-			event.addAuditEvent("PriceFilterEH. Cannot analyse pricing. No config in table aggrconfig. Sequence: " + sequence); 
+			System.out.println("PriceFilterEH cannot analyse pricing. No config in table aggrconfig. Sequence: " + this.sequence); 
+			event.addAuditEvent("PriceFilterEH. Cannot analyse pricing. No config in table aggrconfig. Sequence: " + this.sequence); 
 			return;
 		}
-		priceEntity = event.getPriceEntity();
-		double spread = priceEntity.getSpread();
-
-		//Filter if negative spread. Do NOT continue to process this quote
-		if (spread < 0) {
-			System.out.println("Sequence: " + sequence + ". Negative spread"); 
-			event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Negative spread. Spread is: " + spread); 
-			event.setEventStatus(PriceEvent.EventStatus.FILTERED);
-			event.addFilteredReason(PriceEvent.FilterReason.NEGATIVE_SPREAD);
+		
+		this.priceEntity = event.getPriceEntity();
+		this.sequence = sequence;
+		this.spread = priceEntity.getSpread();
+		if (this.handleNegativeSpread(event)) {
 			return;
 		}
 		
@@ -110,22 +121,77 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 		aggrConfigCurrency = AggrConfigHelper.aggrcurrencyconfigMap.get(currency);
 		previousPrice = previousPriceMap.get(currency);
 
-		//Check if the spread falls within the acceptable range
+		//Check if we have the stats and config we need to carry out the next checks
 		if (priceStats == null || aggrConfigCurrency == null) {
-			event.addAuditEvent("PriceFilterEH. Cannot analyse pricing. No price stats in table pricestats, or no config in table aggrconfig. Currency: " + currency + " hour: " + hour + ". Sequence: " + sequence); 
+			event.addAuditEvent("PriceFilterEH. Cannot analyse pricing. No price stats in table pricestats, or no config in table aggrconfig. Currency: " + currency + " hour: " + hour + ". Sequence: " + this.sequence); 
+			return;
 		}
-		else {
-			if (spread > Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfigCurrency.pctLeewayAllowedSpread / 100))) {
-				event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Exceeds average spread. Spread is: " + spread + ". Expected range: " + Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfigCurrency.pctLeewayAllowedSpread / 100))); 
-				event.setEventStatus(PriceEvent.EventStatus.FILTERED);
-				event.addFilteredReason(PriceEvent.FilterReason.SPREAD_EXCEEDS_AVERAGE);
-			}
+
+		//Check if the spread falls within the acceptable range
+		if (this.handleAllowedSpread(event)) {
+			return;
 		}
-		
+		//Check if the bid/ask has spiked/dropped
+		if (this.handleBidAskSpike(event)) {
+			return;
+		}
+		//Check if the price is stale (timestamp exceeds tolerance)
+		if (this.handleStalePrice(event)) {
+			return;
+		}
+
+		//Log the stats
+		event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". PriceFilterEH event status: " + event.getEventStatus()); 
+
+		if (sequence == PriceEventMain.producerCount) {
+	        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+	        Date dateEnd = new Date();
+			System.out.println("PriceFilterEH processed: " + PriceEventMain.producerCount +
+				"events. Complete time: " + dateFormat.format(dateEnd)); 
+		}
+	}
+	/**
+	 * @return true there is a negative spread
+	 * @return false spread is either zero or positive (i.e. non-negative)
+	 */
+	private boolean handleNegativeSpread(PriceEvent event) {
+		//Filter if negative spread. Do NOT continue to process this quote
+		if (spread < 0) {
+			System.out.println("sequence: " + this.sequence + ". Negative spread"); 
+			event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". Negative spread. Spread is: " + spread); 
+			event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+			event.addFilteredReason(PriceEvent.FilterReason.NEGATIVE_SPREAD);
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * @return true spread tolerance exceeded
+	 * @return false  spread tolerance acceptable
+	 */
+	private boolean handleAllowedSpread(PriceEvent event) {
+		//Filter if negative spread. Do NOT continue to process this quote
+		//Check if the spread falls within the acceptable range
+		if (spread > Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfigCurrency.pctLeewayAllowedSpread / 100))) {
+			event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". Exceeds average spread. Spread is: " + spread + ". Expected range: " + Math.abs(priceStats.averageSpread + (priceStats.averageSpread * aggrConfigCurrency.pctLeewayAllowedSpread / 100))); 
+			event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+			event.addFilteredReason(PriceEvent.FilterReason.SPREAD_EXCEEDS_AVERAGE);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @return true bid/ask spike
+	 * @return false  no bid/ask spike
+	 */
+	private boolean handleBidAskSpike(PriceEvent event) {
+		boolean priceSpike = false;
+
 		//Check if the bid/ask has spiked/dropped
 		if (aggrConfigCurrency != null) {
 			if (previousPrice != null) {
-				boolean priceSpike = false;
 				/*
 				* Check if ASK has spiked/dropped
 				*/
@@ -152,13 +218,13 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 						askSpikeHiCounter.put(currency, new Long(1));
 					}
 					if (askSpikeHiCounter.get(currency) > AggrConfigHelper.getNumberConsecutiveSpikesFiltered()) {
-						System.out.println("Sequence: " + sequence + ". Treating ask price spike as new normal."); 
-						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating ask price spike as new normal."); 
+						System.out.println("Sequence: " + this.sequence + ". Treating ask price spike as new normal."); 
+						event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". Treating ask price spike as new normal."); 
 						askSpikeHiCounter.replace(currency, new Long(0));
 					}
 					else {
-						System.out.println("Sequence: " + sequence + ". FilterEH Ask Hi spike."); 
-						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Ask Hi Spike. Ask exceeds: " + leewayHi); 
+						System.out.println("Sequence: " + this.sequence + ". FilterEH Ask Hi spike."); 
+						event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". Ask Hi Spike. Ask exceeds: " + leewayHi); 
 						priceSpike = true;
 						event.setEventStatus(PriceEvent.EventStatus.FILTERED);
 						event.addFilteredReason(PriceEvent.FilterReason.ASK_SPIKE);
@@ -172,13 +238,13 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 						askSpikeLoCounter.put(currency, new Long(1));
 					}
 					if (askSpikeLoCounter.get(currency) > AggrConfigHelper.getNumberConsecutiveSpikesFiltered()) {
-						System.out.println("Sequence: " + sequence + ". Treating ask price spike as new normal."); 
-						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating ask price spike as new normal."); 
+						System.out.println("Sequence: " + this.sequence + ". Treating ask price spike as new normal."); 
+						event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". Treating ask price spike as new normal."); 
 						askSpikeLoCounter.replace(currency, new Long(0));
 					}
 					else {
-						System.out.println("Sequence: " + sequence + ". FilterEH Ask Lo spike."); 
-						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Ask Lo Spike. Ask below: " + leewayLo); 
+						System.out.println("Sequence: " + this.sequence + ". FilterEH Ask Lo spike."); 
+						event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". Ask Lo Spike. Ask below: " + leewayLo); 
 						priceSpike = true;
 						event.setEventStatus(PriceEvent.EventStatus.FILTERED);
 						event.addFilteredReason(PriceEvent.FilterReason.ASK_SPIKE);
@@ -200,13 +266,13 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 						bidSpikeHiCounter.put(currency, new Long(1));
 					}
 					if (bidSpikeHiCounter.get(currency) > AggrConfigHelper.getNumberConsecutiveSpikesFiltered()) {
-						System.out.println("Sequence: " + sequence + ". Treating bid price spike as new normal."); 
-						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating bid price spike as new normal."); 
+						System.out.println("Sequence: " + this.sequence + ". Treating bid price spike as new normal."); 
+						event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". Treating bid price spike as new normal."); 
 						bidSpikeHiCounter.replace(currency, new Long(0));
 					}
 					else {
-						System.out.println("Sequence: " + sequence + ". FilterEH Bid Hi spike. Prev price: " + previousPrice.bid); 
-						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Bid Hi Spike. Bid exceeds: " + leewayHi); 
+						System.out.println("Sequence: " + this.sequence + ". FilterEH Bid Hi spike. Prev price: " + previousPrice.bid); 
+						event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". Bid Hi Spike. Bid exceeds: " + leewayHi); 
 						priceSpike = true;
 						event.setEventStatus(PriceEvent.EventStatus.FILTERED);
 						event.addFilteredReason(PriceEvent.FilterReason.BID_SPIKE);
@@ -220,13 +286,13 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 						bidSpikeLoCounter.put(currency, new Long(1));
 					}
 					if (bidSpikeLoCounter.get(currency) > AggrConfigHelper.getNumberConsecutiveSpikesFiltered()) {
-						System.out.println("Sequence: " + sequence + ". Treating bid price spike as new normal."); 
-						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Treating bid price spike as new normal."); 
+						System.out.println("Sequence: " + this.sequence + ". Treating bid price spike as new normal."); 
+						event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". Treating bid price spike as new normal."); 
 						bidSpikeLoCounter.replace(currency, new Long(0));
 					}
 					else {
-						System.out.println("Sequence: " + sequence + ". FilterEH Bid Lo spike."); 
-						event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". Bid Lo Spike. Bid below: " + leewayLo); 
+						System.out.println("Sequence: " + this.sequence + ". FilterEH Bid Lo spike."); 
+						event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". Bid Lo Spike. Bid below: " + leewayLo); 
 						priceSpike = true;
 						event.setEventStatus(PriceEvent.EventStatus.FILTERED);
 						event.addFilteredReason(PriceEvent.FilterReason.BID_SPIKE);
@@ -258,19 +324,38 @@ public class PriceFilterEH implements EventHandler<PriceEvent> {
 			}
 		}
 		else {
-			System.out.println("PriceFilterEH cannot analyse pricing. No config in table aggrconfig. Currency: " + currency + ". Sequence: " + sequence); 
-			event.addAuditEvent("PriceFilterEH. Cannot analyse pricing. No config in table aggrconfig. Currency: " + currency + ". Sequence: " + sequence); 
+			System.out.println("PriceFilterEH cannot analyse pricing. No config in table aggrconfig. Currency: " + currency + ". Sequence: " + this.sequence); 
+			event.addAuditEvent("PriceFilterEH. Cannot analyse pricing. No config in table aggrconfig. Currency: " + currency + ". Sequence: " + this.sequence); 
 		}
-		
-		//Log the stats
-		event.addAuditEvent("PriceFilterEH. Sequence: " + sequence + ". PriceFilterEH event status: " + event.getEventStatus()); 
+		return priceSpike;
+	}
+	/**
+	 * Check whether the price is still valid. A price is valid if the price
+	 * timestamp is within the tolerance specified in the config. If the timestamp
+	 * is outside the tolerance consider the price to be stale/invalid
+	 * 
+	 * @return true the price is stale
+	 * @return false the price is valid
+	 */
+	private boolean handleStalePrice(PriceEvent event) {
 
-		if (sequence == PriceEventMain.producerCount) {
-	        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
-	        Date dateEnd = new Date();
-			System.out.println("PriceFilterEH processed: " + PriceEventMain.producerCount +
-				"events. Complete time: " + dateFormat.format(dateEnd)); 
+		//Determine interval between system timestamp and price quote timestamp
+		//Here we convert both timestamps to LocalDateTime using the quote timezone
+		String quoteTimezone = AggrConfigHelper.getPriceFeedTimezone();
+		String systemTimezone = AggrConfigHelper.getSystemTimezone();
+		LocalDateTime quoteTimestamp = priceEntity.getQuoteTimestamp();
+		LocalDateTime currentTimestamp = LocalDateTime.now(ZoneId.of(quoteTimezone));
+		long ms = quoteTimestamp.until(currentTimestamp, ChronoUnit.MILLIS);
+		
+		//Filter if stale price. Do NOT continue to process this quote
+		if (ms > AggrConfigHelper.getAllowableTimeIntervalFeedToSystemMS()) {
+			System.out.println("sequence: " + this.sequence + ". Stale quote"); 
+			event.addAuditEvent("PriceFilterEH. Sequence: " + this.sequence + ". Stale quote. Time interval is: " + (ms - AggrConfigHelper.getAllowableTimeIntervalFeedToSystemMS())); 
+			event.setEventStatus(PriceEvent.EventStatus.FILTERED);
+			event.addFilteredReason(PriceEvent.FilterReason.STALE_QUOTE);
+			return true;
 		}
+		return false;
 	}
 	
 	/**

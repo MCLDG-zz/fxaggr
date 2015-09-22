@@ -12,6 +12,9 @@ public static class globalconfig {
     public  String[] availableschemes;
     public  String scheme;
     public  String[] liquidityproviders;
+    public  String pricefeedtimezone;
+    public  String systemtimezone;
+    public  long allowabletimeintervalfeedtosystemms;
     public  primarybidask primarybidask;
     public  bestbidask bestbidask;
     public  filteringrules filteringrules;

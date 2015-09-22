@@ -28,6 +28,9 @@ public class AggrConfigHelper {
 	private static String priceSelectionScheme = null;
 	private static String currentPrimaryLiquidityProvider = null;
 	private static String[] currentLiquidityProviders = null;
+    private static String pricefeedtimezone;
+    private static String systemtimezone;
+    private static long allowabletimeintervalfeedtosystemms;
 	private static String actionwhennomoreliquidityproviders;
 	private static long numberconsecutivespikesfiltered;
 	private static long timeintervalformatchingquotesms;
@@ -67,6 +70,9 @@ public class AggrConfigHelper {
 		}
 		currentLiquidityProviders = aggrConfig.globalconfig.liquidityproviders;
 		currentPrimaryLiquidityProvider = aggrConfig.globalconfig.liquidityproviders[0];
+    	pricefeedtimezone = aggrConfig.globalconfig.pricefeedtimezone;
+    	systemtimezone = aggrConfig.globalconfig.systemtimezone;
+    	allowabletimeintervalfeedtosystemms = aggrConfig.globalconfig.allowabletimeintervalfeedtosystemms;
 		numberconsecutivespikesfiltered = aggrConfig.globalconfig.filteringrules.numberconsecutivespikesfiltered;
 		timeintervalformatchingquotesms = aggrConfig.globalconfig.bestbidask.timeintervalformatchingquotesms;
 		minimummatchingquotesrequired = aggrConfig.globalconfig.bestbidask.minimummatchingquotesrequired;
@@ -121,5 +127,14 @@ public class AggrConfigHelper {
 	}
 	public static long getTimeIntervalForMatchingQuotesMS() {
 	    return timeintervalformatchingquotesms;
+	}
+	public static String getPriceFeedTimezone() {
+	    return pricefeedtimezone;
+	}
+	public static String getSystemTimezone() {
+	    return systemtimezone;
+	}
+	public static long getAllowableTimeIntervalFeedToSystemMS() {
+	    return allowabletimeintervalfeedtosystemms;
 	}
 }

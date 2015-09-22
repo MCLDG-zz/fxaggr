@@ -9,6 +9,9 @@ db.aggrconfig.insert({
         "availableschemes": ["Primary Bid/Ask", "Best Bid/Ask", "Smoothing"],
         "scheme": "Best Bid/Ask",
         "liquidityproviders": ["HKD-DB", "HK-Saxo F", "CXSymbol"],
+        "pricefeedtimezone": "GMT",
+        "systemtimezone": "GMT",
+        "allowabletimeintervalfeedtosystemms": 1000,
         "primarybidask": {
             "timeintervalbeforeswitchingms": 5000,
             "numberquotesbeforeswitchtoprevious": 3,
