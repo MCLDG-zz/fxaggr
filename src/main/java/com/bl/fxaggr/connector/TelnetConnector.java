@@ -17,7 +17,7 @@ import org.apache.commons.net.telnet.InvalidTelnetOptionException;
 /***
  * This is a simple example of use of TelnetClient.
  ***/
-public class TelnetConnector implements Runnable, TelnetNotificationHandler
+public class TelnetConnector implements Runnable
 {
     static TelnetClient tc = null;
 
@@ -70,9 +70,9 @@ public class TelnetConnector implements Runnable, TelnetNotificationHandler
                 tc.connect(remoteip, remoteport);
 
 
-                Thread reader = new Thread (new TelnetClientExample());
-                tc.registerNotifHandler(new TelnetClientExample());
-                System.out.println("TelnetClientExample");
+                Thread reader = new Thread (new TelnetConnector());
+                //tc.registerNotifHandler(new TelnetConnector());
+                System.out.println("TelnetConnector");
                 reader.start();
                 OutputStream outstr = tc.getOutputStream();
 
