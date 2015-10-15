@@ -50,6 +50,7 @@ public class PriceEventMain extends Thread {
         EventHandler < PriceEvent > eh30 = new PriceEventToMongoEH();
         EventHandler < PriceEvent > eh31 = new PriceEventToMongoBatchEH();
         EventHandler < PriceEvent > eh32 = new PriceEventToMongoAsyncBatchEH();
+        EventHandler < PriceEvent > eh40 = new PriceEventToCassandraEH();
 
         /******************************************************************************************
          * BIG WARNING
@@ -75,7 +76,7 @@ public class PriceEventMain extends Thread {
         // does not have to complete before PriceFilterEH starts. We sort of want a copy of 
         // the event to be persisted to Mongo asynchronously while we start on the filtering.
         //disruptor.handleEventsWith(eh3).then(eh4).then(eh10).then(eh20);
-        disruptor.handleEventsWith(eh3).then(eh4).then(eh10).then(eh31).then(eh20);
+        disruptor.handleEventsWith(eh3).then(eh4).then(eh10).then(eh40).then(eh20);
         //disruptor.handleEventsWith(eh3).then(eh4).then(eh21).then(eh5);
         //disruptor.handleEventsWith(eh20).then(eh3);
 
