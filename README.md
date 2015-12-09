@@ -34,6 +34,15 @@ config file in the same directory - which one is used depends on what type of te
 * Use a browser to navigate to: http://192.168.9.99:3001/#/dashboard
 * The UI shows various metrics on how the engine is performing. It can also be used to update the config in Mongo, either at a global level or per currency pair
 
+### To run the engine:
+There are currently two ways to run the engine:
+
+* in test mode. This runs test cases, and is started by 'test-fxaggr.sh'
+* in file mode, where prices are read from a file. 'run-fxaggr.sh'
+* Currently the app does not connect to real prices feeds. Connecting the app to Kafka to retrieve prices was started but not completed. 
+The idea I had was to develop adaptors that connect to the price feed (a simple telnet connector, in most cases) and publish the prices
+to Kafka. The engine simply reads all prices from a Kafka topic, and publishes the final prices to another topic
+
 ### Add the following outstanding functionality:
 
 * As part of filtering, check prices in one feed against prices in another. If the variance is too high, reject the prices. This is to
