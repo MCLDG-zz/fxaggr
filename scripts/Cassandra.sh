@@ -22,7 +22,7 @@ CREATE TABLE fxaggr.rawtickdatabysymbol (
   bid decimal,
   ask decimal,
   PRIMARY KEY (symbol, tick_timestamp)
-);
+) WITH caching = 'none' AND COMPACTION = {'class': 'DateTieredCompactionStrategy', 'enabled': 'true'};
 
 CREATE TABLE fxaggr.rawtickdatabylp (
   liquidity_provider text,
@@ -31,7 +31,7 @@ CREATE TABLE fxaggr.rawtickdatabylp (
   bid decimal,
   ask decimal,
   PRIMARY KEY (liquidity_provider, symbol, tick_timestamp)
-);
+) WITH caching = 'none' AND COMPACTION = {'class': 'DateTieredCompactionStrategy', 'enabled': 'true'};
 
 CREATE TABLE fxaggr.tickdata (
   symbol text,
@@ -40,7 +40,7 @@ CREATE TABLE fxaggr.tickdata (
   bid decimal,
   ask decimal,
   PRIMARY KEY (symbol, tick_timestamp)
-);
+) WITH caching = 'none' AND COMPACTION = {'class': 'DateTieredCompactionStrategy', 'enabled': 'true'};
 
 CREATE TABLE fxaggr.minutedata (
   symbol text,
@@ -52,23 +52,18 @@ CREATE TABLE fxaggr.minutedata (
   ask_lo decimal,
   number_of_ticks bigint,
   PRIMARY KEY (symbol, tick_date, tick_minuteofday)
-);
+) WITH caching = 'none' AND COMPACTION = {'class': 'DateTieredCompactionStrategy', 'enabled': 'true'};
 
 CREATE TABLE fxaggr.daydata (
   symbol text,
   tick_date timestamp,
+  day_open decimal,
+  day_close decimal,
   bid_hi decimal,
   bid_lo decimal,
   ask_hi decimal,
   ask_lo decimal,
   number_of_ticks bigint,
   PRIMARY KEY (symbol, tick_date)
-);
+) WITH caching = 'none' AND COMPACTION = {'class': 'DateTieredCompactionStrategy', 'enabled': 'true'};
 
-CREATE TABLE fxaggr.openclose (
-  symbol text,
-  tick_date timestamp,
-  day_open decimal,
-  day_close decimal,
-  PRIMARY KEY (symbol, tick_date)
-);

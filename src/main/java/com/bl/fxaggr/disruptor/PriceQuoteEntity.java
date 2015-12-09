@@ -1,12 +1,12 @@
 package com.bl.fxaggr.disruptor;
 
 import java.time.Instant;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class PriceQuoteEntity {
 
     private String symbol;
-    private LocalDate quoteDate;
+    private LocalDateTime quoteDate;
     private int minuteOfDay;
     private double open;
     private double close;
@@ -19,7 +19,7 @@ public class PriceQuoteEntity {
     public void setSymbol(String symbol) {
         this.symbol = symbol;
     }
-    public void setQuoteDate(LocalDate quoteDate) {
+    public void setQuoteDate(LocalDateTime quoteDate) {
         this.quoteDate = quoteDate;
     }
     public void setMinuteOfDay(int minuteOfDay) {
@@ -49,7 +49,7 @@ public class PriceQuoteEntity {
     public String getSymbol() {
         return this.symbol;
     }
-    public LocalDate getQuoteDate() {
+    public LocalDateTime getQuoteDate() {
         return this.quoteDate;
     }
     public int getMinuteOfDay() {

@@ -58,6 +58,9 @@ public class PriceEventToCassandraEH implements EventHandler<PriceEvent> {
 	
 	private void handleMinuteData(PriceEntity pe) {
 		LocalDate priceQuoteDate = pe.getQuoteTimestamp().toLocalDate();
+		LocalDateTime timestampMinutesOnly = pe.getQuoteTimestamp();
+		timestampMinutesOnly = timestampMinutesOnly.withSecond(0);
+		timestampMinutesOnly = timestampMinutesOnly.withNano(0);
 		int hour = pe.getQuoteTimestamp().getHour();
 		int minute = pe.getQuoteTimestamp().getMinute();
 		int minuteOfDay = 0;
@@ -74,7 +77,7 @@ public class PriceEventToCassandraEH implements EventHandler<PriceEvent> {
 		if (priceQuoteEntity == null) {
 			priceQuoteEntity = new PriceQuoteEntity();
 			priceQuoteEntity.setSymbol(pe.getSymbol());
-			priceQuoteEntity.setQuoteDate(priceQuoteDate);
+			priceQuoteEntity.setQuoteDate(timestampMinutesOnly);
 		    priceQuoteEntity.setMinuteOfDay(minuteOfDay);
 		    priceQuoteEntity.setBidHi(pe.getBid());
 		    priceQuoteEntity.setBidLo(pe.getBid());
@@ -107,7 +110,7 @@ public class PriceEventToCassandraEH implements EventHandler<PriceEvent> {
 				}
 			} else {
 				WriteMinuteData(priceQuoteEntity);
-				priceQuoteEntity.setQuoteDate(priceQuoteDate);
+				priceQuoteEntity.setQuoteDate(timestampMinutesOnly);
 			    priceQuoteEntity.setMinuteOfDay(minuteOfDay);
 			    priceQuoteEntity.setBidHi(pe.getBid());
 			    priceQuoteEntity.setBidLo(pe.getBid());
