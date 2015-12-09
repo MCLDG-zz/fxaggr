@@ -1,37 +1,41 @@
+#FX Price Aggregation Engine
+
 There are two parts to this application:
 
-price aggregation engine
-UI for checking the progress of the engine
+* price aggregation engine
+* UI for checking the progress of the engine
 
 Requires Java 8. Uses MongoDB, Cassandra DB and I was in the process of integrating Kafka to connect to price sources, and to
 contain the topics for outputting the final prices.
 
-MongoDB contains the configuration and can also be used to store the output, i.e. the final prices
-Cassandra is used to store the final prices and the aggregate tick data, such as tick data per minute, hour, day, etc.
+* MongoDB contains the configuration and can also be used to store the output, i.e. the final prices
+* Cassandra is used to store the final prices and the aggregate tick data, such as tick data per minute, hour, day, etc.
 
-To build:
+### To build:
 
 in 'fxaggr' directory, execute 'mvn package'
 
-To start mongo:
+### To start mongo:
 
-in 'fxaggr' directory, execute 'start-mongo.sh'
-The config stored in mongo can be configured using the script in 'test/java/com/bl/fxaggr/MongoPrimaryConfig.json'. There is another 
+* in 'fxaggr' directory, execute 'start-mongo.sh'
+* The config stored in mongo can be configured using the script in 'test/java/com/bl/fxaggr/MongoPrimaryConfig.json'. There is another 
 config file in the same directory - which one is used depends on what type of testing you want to carry out.
 
-to start cassandra:
+### to start cassandra:
 
-in 'fxaggr' directory, execute 'ccm start'. Type 'ccm' to see other commands that can be used. Type 'ccm status' to see status of the Cassandra cluster.
-Use the script in 'scripts/Cassandra.sh' to rebuild the Cassandra keyspace. This can be executed using cqlsh by typing: source 'Cassandra.sh'. This should drop and recreate the keyspace
+* in 'fxaggr' directory, execute 'ccm start'. Type 'ccm' to see other commands that can be used. Type 'ccm status' to see status of the Cassandra cluster.
+* Use the script in 'scripts/Cassandra.sh' to rebuild the Cassandra keyspace. This can be executed using cqlsh by typing: source 'Cassandra.sh'. This should drop and recreate the keyspace
 
+### To prepare the UI:
 
-To TAR the app:
+* The UI uses node.js and angular.js. 
+* In the root directory is package.json. So execute 'npm install' in the same directory as pacakge.json and this will install all dependencies
+* Then type 'node server.js' to start the node server. It should listen on port 3001
+* Use a browser to navigate to: http://192.168.9.99:3001/#/dashboard
 
-in 'fxaggr' directory, execute ./mktar.sh
+### Add the following outstanding functionality:
 
-Add the following outstanding functionality:
-
-As part of filtering, check prices in one feed against prices in another. If the variance is too high, reject the prices. This is to
+* As part of filtering, check prices in one feed against prices in another. If the variance is too high, reject the prices. This is to
 prevent a recurrence of the issue we had where one price feed was providing us the wrong prices.
-It should also check the timestamps, and check them against current system time to make sure they are aligned. I have completed the 
+* It should also check the timestamps, and check them against current system time to make sure they are aligned. I have completed the 
 price stale check. Now need to check that prices from feedA are within certain time gap to prices from feedB
