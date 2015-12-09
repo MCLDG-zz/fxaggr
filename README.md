@@ -3,7 +3,7 @@
 There are two parts to this application:
 
 * price aggregation engine
-* UI for checking the progress of the engine
+* UI for checking the progress of the engine, and for updating the configuration
 
 Requires Java 8. Uses MongoDB, Cassandra DB and I was in the process of integrating Kafka to connect to price sources, and to
 contain the topics for outputting the final prices.
@@ -32,6 +32,7 @@ config file in the same directory - which one is used depends on what type of te
 * In the root directory is package.json. So execute 'npm install' in the same directory as pacakge.json and this will install all dependencies
 * Then type 'node server.js' to start the node server. It should listen on port 3001
 * Use a browser to navigate to: http://192.168.9.99:3001/#/dashboard
+* The UI shows various metrics on how the engine is performing. It can also be used to update the config in Mongo, either at a global level or per currency pair
 
 ### Add the following outstanding functionality:
 
